@@ -6,8 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Random;
 
 /**
- * La classe NeuralNetwork implementa una semplice rete neurale con un singolo strato nascosto.
- * Questa rete ha uno strato di input, uno strato nascosto e uno strato di output.
+ * Una semplice rete neurale con un singolo strato nascosto.
  */
 public class NeuralNetwork {
     // Logger per registrare messaggi di debug, utile per capire cosa sta succedendo nel codice
