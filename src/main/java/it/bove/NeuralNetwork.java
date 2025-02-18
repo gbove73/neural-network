@@ -154,20 +154,35 @@ public class NeuralNetwork {
 
     /**
      * Applica il dropout ai neuroni di un determinato strato.
-     * Per evitare l'overfitting, il dropout disattiva casualmente una frazione
-     * dei neuroni durante l'addestramento, riducendo la possibilità
-     * che la rete neurale si adatti troppo ai dati di addestramento.
-     * I neuroni disattivati vengono impostati a 0.
+     * Il dropout è una tecnica di regolarizzazione utilizzata per prevenire l'overfitting
+     * nelle reti neurali. Durante l'addestramento, disattiva casualmente una frazione
+     * dei neuroni, riducendo la possibilità che la rete neurale si adatti troppo ai dati
+     * di addestramento. I neuroni disattivati vengono impostati a 0.
      *
-     * @param layer Array dei neuroni del livello.
+     * @param layer Array dei neuroni del livello. Questo array rappresenta i valori
+     *              dei neuroni in uno specifico strato della rete neurale.
      */
     private void applyDropout(double[] layer) {
+        // Itera su ogni neurone del livello
         for (int i = 0; i < layer.length; i++) {
-            if (rand.nextDouble() < dropoutRate) {
+            // Verifica se il neurone deve essere disattivato in base al tasso di dropout
+            if (isNeuronDropped()) {
+                // Imposta il valore del neurone a 0, disattivandolo
                 layer[i] = 0;
                 log.debug("Neurone {} disattivato dal dropout", i);
             }
         }
+    }
+
+    /**
+     * Determina se un neurone deve essere disattivato in base al tasso di dropout.
+     *
+     * @return true se il neurone deve essere disattivato, false altrimenti.
+     */
+    private boolean isNeuronDropped() {
+        // Genera un numero casuale tra 0.0 e 1.0 e verifica se è inferiore al tasso di dropout.
+        // Se il numero casuale è inferiore al tasso di dropout, il neurone viene disattivato.
+        return rand.nextDouble() < dropoutRate;
     }
 
     /**
