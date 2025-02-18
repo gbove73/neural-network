@@ -24,7 +24,6 @@ public class NeuralNetwork {
 
     /**
      * Costruttore per la classe NeuralNetwork.
-     * Questo metodo viene chiamato quando si crea una nuova istanza della rete neurale.
      *
      * @param inputSize    Numero di neuroni nello strato di input.
      * @param hiddenSize   Numero di neuroni nello strato nascosto.
