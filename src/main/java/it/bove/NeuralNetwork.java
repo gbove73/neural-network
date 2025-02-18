@@ -7,7 +7,6 @@ import java.util.Random;
 
 /**
  * La classe NeuralNetwork implementa una semplice rete neurale con un singolo strato nascosto.
- * Una rete neurale è un modello di apprendimento automatico ispirato al cervello umano.
  * Questa rete ha uno strato di input, uno strato nascosto e uno strato di output.
  */
 public class NeuralNetwork {
