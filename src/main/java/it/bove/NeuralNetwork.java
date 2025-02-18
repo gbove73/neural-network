@@ -7,6 +7,11 @@ import java.util.Random;
 
 /**
  * Una semplice rete neurale con un singolo strato nascosto.
+ * Uno strato nascosto in una rete neurale è uno strato di neuroni che si trova tra lo strato di input e lo strato di output.
+ * Non è direttamente visibile né agli input né agli output della rete.
+ * Il suo scopo principale è quello di elaborare e trasformare i dati ricevuti dallo strato di input,
+ * applicando una serie di pesi e funzioni di attivazione, per poi passare i risultati allo strato di output.
+ * Gli strati nascosti permettono alla rete neurale di apprendere e rappresentare relazioni complesse nei dati.
  */
 public class NeuralNetwork {
     private static final Logger log = LoggerFactory.getLogger(NeuralNetwork.class);
