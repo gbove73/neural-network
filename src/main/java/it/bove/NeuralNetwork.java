@@ -115,14 +115,14 @@ public class NeuralNetwork {
      * @return Array di output della rete neurale.
      */
     public double[] feedForward(double[] inputs) {
-        log.debug("Esecuzione del feedforward con input {}", (Object) inputs);
+        log.debug("Esecuzione del feedforward con input {}", inputs);
 
         // Calcola i valori dei neuroni nello strato nascosto
         calculateLayerOutputs(inputs, hiddenLayer, weightsInputHidden);
         // Calcola i valori dei neuroni nello strato di output
         calculateLayerOutputs(hiddenLayer, outputLayer, weightsHiddenOutput);
 
-        log.debug("Risultato del feedforward: {}", (Object) outputLayer);
+        log.debug("Risultato del feedforward: {}", outputLayer);
         return outputLayer; // Restituisce l'array dei valori dei neuroni di output
     }
 
@@ -152,7 +152,7 @@ public class NeuralNetwork {
      * @param expectedOutputs Array di output attesi per la rete neurale.
      */
     public void train(double[] inputs, double[] expectedOutputs) {
-        log.debug("Inizio dell'addestramento con input {} e output attesi {}", (Object) inputs, (Object) expectedOutputs);
+        log.debug("Inizio dell'addestramento con input {} e output attesi {}", inputs, expectedOutputs);
 
         double[] outputs = feedForward(inputs); // Esegue il feedforward per ottenere gli output attuali
         double[] outputErrors = calculateErrors(expectedOutputs, outputs); // Calcola gli errori dei neuroni di output
