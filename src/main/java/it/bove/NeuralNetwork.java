@@ -9,7 +9,6 @@ import java.util.Random;
  * Una semplice rete neurale con un singolo strato nascosto.
  */
 public class NeuralNetwork {
-    // Logger per registrare messaggi di debug, utile per capire cosa sta succedendo nel codice
     private static final Logger log = LoggerFactory.getLogger(NeuralNetwork.class);
 
     // Matrice dei pesi tra lo strato di input e lo strato nascosto
