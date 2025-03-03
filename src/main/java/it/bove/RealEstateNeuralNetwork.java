@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
  * in base a caratteristiche come dimensione, posizione e qualità.
  */
 public class RealEstateNeuralNetwork {
-    // Utilizziamo un logger per tracciare l'esecuzione del programma e facilitare il debug
+
     private static final Logger log = LoggerFactory.getLogger(RealEstateNeuralNetwork.class);
 
     // Definiamo l'interfaccia per la rete neurale, seguendo il principio di Dependency Inversion
@@ -29,10 +29,7 @@ public class RealEstateNeuralNetwork {
      * @param featureNormalizer Normalizzatore per le caratteristiche degli immobili
      * @param priceNormalizer   Normalizzatore per i prezzi degli immobili
      */
-    public RealEstateNeuralNetwork(
-            NeuralNetworkModel model,
-            FeatureNormalizer featureNormalizer,
-            PriceNormalizer priceNormalizer) {
+    public RealEstateNeuralNetwork(NeuralNetworkModel model, FeatureNormalizer featureNormalizer, PriceNormalizer priceNormalizer) {
         // Inizializziamo il modello con le dipendenze fornite dall'esterno
         this.model = model;
         this.featureNormalizer = featureNormalizer;
@@ -51,8 +48,7 @@ public class RealEstateNeuralNetwork {
         this.model = new NeuralNetworkAdapter(new NeuralNetwork(5, 8, 1, 0.05, 0.1));
 
         // Definiamo i parametri di normalizzazione basati su analisi statistiche del mercato immobiliare
-        this.featureNormalizer = new DefaultFeatureNormalizer(
-                new double[]{30.0, 1.0, 1.0, 0.0, 1.0},   // Valori minimi: mq, stanze, bagni, piano, zona
+        this.featureNormalizer = new DefaultFeatureNormalizer(new double[]{30.0, 1.0, 1.0, 0.0, 1.0},   // Valori minimi: mq, stanze, bagni, piano, zona
                 new double[]{250.0, 5.0, 3.0, 10.0, 10.0} // Valori massimi
         );
 
@@ -117,8 +113,7 @@ public class RealEstateNeuralNetwork {
         double[] features = {squareMeters, rooms, bathrooms, floor, zoneRating};
 
         // Registriamo i dettagli dell'immobile per tracciabilità
-        log.info("Valutazione immobile: {}mq, {} stanze, {} bagni, piano {}, zona {}",
-                squareMeters, rooms, bathrooms, floor, zoneRating);
+        log.info("Valutazione immobile: {}mq, {} stanze, {} bagni, piano {}, zona {}", squareMeters, rooms, bathrooms, floor, zoneRating);
 
         // Normalizziamo le caratteristiche per l'input alla rete neurale
         double[] normalizedFeatures = featureNormalizer.normalize(features);
@@ -171,8 +166,7 @@ public class RealEstateNeuralNetwork {
             sumPercentageError += percentageError;
 
             // Registriamo l'errore per questo immobile specifico
-            log.debug("Immobile {}: Reale €{}, Stimato €{}, Errore {}%",
-                    i, (int) realPrice, (int) estimatedPrice, (int) (percentageError * 100));
+            log.debug("Immobile {}: Reale €{}, Stimato €{}, Errore {}%", i, (int) realPrice, (int) estimatedPrice, (int) (percentageError * 100));
         }
 
         // Calcoliamo l'errore medio percentuale assoluto (MAPE)
