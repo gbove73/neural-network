@@ -67,6 +67,47 @@ System.out.println("Prezzo stimato: €" + (int)price);
 
 ## 📚 Struttura del Progetto
 
+### 🏛️ Organizzazione dei Package
+
+Il progetto è strutturato seguendo i principi di Clean Architecture, che garantisce separazione delle responsabilità e indipendenza dai framework:
+
+```
+it.bove
+├── core                 // Logica di business centrale indipendente dal dominio
+│   ├── nn               // Implementazione base rete neurale
+│   └── normalization    // Normalizzazione dati generica
+├── domain               // Regole di business specifiche del dominio
+│   └── realestate       // Dominio della valutazione immobiliare
+├── application          // Casi d'uso dell'applicazione
+└── infrastructure       // Adattatori e implementazioni concrete
+```
+
+#### Strati Architetturali
+
+- **Core**: Contiene la logica base indipendente dal dominio
+  - `NeuralNetwork` - Implementazione matematica della rete neurale
+  - `NeuralNetworkModel` - Interfaccia per modelli di rete neurale
+  - `Normalizer<T,R>` - Interfaccia generica per normalizzazione dei dati
+
+- **Domain**: Contiene le regole di business e interfacce specifiche del dominio
+  - `PriceNormalizer` - Interfaccia per normalizzazione prezzi immobiliari
+  - `FeatureNormalizer` - Interfaccia per normalizzazione caratteristiche immobiliari
+
+- **Application**: Implementa i casi d'uso dell'applicazione
+  - `RealEstateNeuralNetwork` - Sistema di valutazione immobiliare
+
+- **Infrastructure**: Contiene implementazioni concrete delle interfacce
+  - `NeuralNetworkAdapter` - Adapter per connettere la rete neurale all'interfaccia del modello
+  - `DefaultPriceNormalizer` - Implementazione concreta per normalizzazione prezzi
+  - `DefaultFeatureNormalizer` - Implementazione concreta per normalizzazione caratteristiche
+
+#### Vantaggi dell'Architettura
+
+- **Indipendenza dai Framework** - Il core e il dominio non dipendono da librerie esterne
+- **Testabilità** - Le interfacce permettono di testare i componenti in isolamento
+- **Flessibilità** - Facile sostituire implementazioni (es. diversa strategia di normalizzazione)
+- **Manutenibilità** - Ogni componente ha una responsabilità chiara e ben definita
+
 ### `NeuralNetwork.java`
 
 Il cuore del progetto: implementazione da zero di una rete neurale feedforward con:

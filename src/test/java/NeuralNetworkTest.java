@@ -1,4 +1,4 @@
-import it.bove.NeuralNetwork;
+import it.bove.core.nn.NeuralNetwork;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

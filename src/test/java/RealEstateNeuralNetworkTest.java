@@ -1,4 +1,4 @@
-import it.bove.RealEstateNeuralNetwork;
+import it.bove.application.RealEstateNeuralNetwork;
 // Import delle classi necessarie per i test con JUnit 5
 import org.junit.jupiter.api.BeforeEach; // Per annotare metodi che vengono eseguiti prima di ogni test
 import org.junit.jupiter.api.DisplayName; // Per assegnare nomi descrittivi ai test

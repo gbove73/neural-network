@@ -1,5 +1,12 @@
-package it.bove;
+package it.bove.application;
 
+import it.bove.infrastructure.normalization.DefaultFeatureNormalizer;
+import it.bove.infrastructure.normalization.DefaultPriceNormalizer;
+import it.bove.infrastructure.nn.NeuralNetworkAdapter;
+import it.bove.core.nn.NeuralNetwork;
+import it.bove.core.nn.NeuralNetworkModel;
+import it.bove.domain.realestate.FeatureNormalizer;
+import it.bove.domain.realestate.PriceNormalizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -244,163 +251,5 @@ public class RealEstateNeuralNetwork {
         return errorSum / features.length;
     }
 
-    /**
-     * Interfaccia che definisce il comportamento di un modello di rete neurale.
-     * Seguendo il principio di Interface Segregation, definiamo un'interfaccia minimale.
-     */
-    public interface NeuralNetworkModel {
-        /**
-         * Addestra il modello con un esempio.
-         *
-         * @param input          Caratteristiche di input normalizzate
-         * @param expectedOutput Output atteso normalizzato
-         */
-        void train(double[] input, double[] expectedOutput);
 
-        /**
-         * Esegue una predizione.
-         *
-         * @param input Caratteristiche di input normalizzate
-         * @return Output previsto normalizzato
-         */
-        double[] predict(double[] input);
-    }
-
-    /**
-     * Adapter per la classe NeuralNetwork esistente.
-     * Seguendo il pattern Adapter, adattiamo l'implementazione esistente alla nostra interfaccia.
-     */
-    private static class NeuralNetworkAdapter implements NeuralNetworkModel {
-        // La rete neurale concreta da adattare
-        private final NeuralNetwork neuralNetwork;
-
-        /**
-         * Costruttore che accetta una rete neurale da adattare.
-         *
-         * @param neuralNetwork La rete neurale da adattare
-         */
-        public NeuralNetworkAdapter(NeuralNetwork neuralNetwork) {
-            // Memorizziamo la rete neurale da adattare
-            this.neuralNetwork = neuralNetwork;
-        }
-
-        @Override
-        public void train(double[] input, double[] expectedOutput) {
-            // Deleghiamo l'addestramento alla rete neurale concreta
-            neuralNetwork.train(input, expectedOutput);
-        }
-
-        @Override
-        public double[] predict(double[] input) {
-            // Deleghiamo la predizione alla rete neurale concreta
-            return neuralNetwork.feedForward(input);
-        }
-    }
-
-    /**
-     * Interfaccia per la normalizzazione delle caratteristiche degli immobili.
-     * Seguendo il principio di Single Responsibility, separiamo la logica di normalizzazione.
-     */
-    public interface FeatureNormalizer {
-        /**
-         * Normalizza le caratteristiche di un immobile.
-         *
-         * @param features Array delle caratteristiche da normalizzare
-         * @return Array delle caratteristiche normalizzate
-         */
-        double[] normalize(double[] features);
-    }
-
-    /**
-     * Implementazione predefinita del normalizzatore di caratteristiche.
-     */
-    private static class DefaultFeatureNormalizer implements FeatureNormalizer {
-        // Valori minimi per ciascuna caratteristica
-        private final double[] featureMin;
-        // Valori massimi per ciascuna caratteristica
-        private final double[] featureMax;
-
-        /**
-         * Costruttore con valori minimi e massimi per la normalizzazione.
-         *
-         * @param featureMin Array dei valori minimi per ciascuna caratteristica
-         * @param featureMax Array dei valori massimi per ciascuna caratteristica
-         */
-        public DefaultFeatureNormalizer(double[] featureMin, double[] featureMax) {
-            // Memorizziamo i valori minimi e massimi
-            this.featureMin = featureMin;
-            this.featureMax = featureMax;
-        }
-
-        @Override
-        public double[] normalize(double[] features) {
-            // Creiamo un nuovo array per i valori normalizzati
-            double[] normalized = new double[features.length];
-
-            // Per ogni caratteristica, applichiamo la formula di normalizzazione
-            for (int i = 0; i < features.length; i++) {
-                // Formula: (valore - minimo) / (massimo - minimo)
-                normalized[i] = (features[i] - featureMin[i]) / (featureMax[i] - featureMin[i]);
-            }
-
-            // Restituiamo l'array normalizzato
-            return normalized;
-        }
-    }
-
-    /**
-     * Interfaccia per la normalizzazione dei prezzi degli immobili.
-     * Seguendo il principio di Interface Segregation, creiamo un'interfaccia specifica.
-     */
-    public interface PriceNormalizer {
-        /**
-         * Normalizza un prezzo.
-         *
-         * @param price Prezzo da normalizzare
-         * @return Prezzo normalizzato nell'intervallo [0,1]
-         */
-        double normalize(double price);
-
-        /**
-         * Denormalizza un prezzo normalizzato.
-         *
-         * @param normalizedPrice Prezzo normalizzato nell'intervallo [0,1]
-         * @return Prezzo reale in euro
-         */
-        double denormalize(double normalizedPrice);
-    }
-
-    /**
-     * Implementazione predefinita del normalizzatore di prezzi.
-     */
-    private static class DefaultPriceNormalizer implements PriceNormalizer {
-        // Prezzo minimo nel dataset
-        private final double priceMin;
-        // Prezzo massimo nel dataset
-        private final double priceMax;
-
-        /**
-         * Costruttore con prezzi minimi e massimi per la normalizzazione.
-         *
-         * @param priceMin Prezzo minimo in euro
-         * @param priceMax Prezzo massimo in euro
-         */
-        public DefaultPriceNormalizer(double priceMin, double priceMax) {
-            // Memorizziamo i prezzi minimi e massimi
-            this.priceMin = priceMin;
-            this.priceMax = priceMax;
-        }
-
-        @Override
-        public double normalize(double price) {
-            // Applichiamo la formula di normalizzazione: (prezzo - minimo) / (massimo - minimo)
-            return (price - priceMin) / (priceMax - priceMin);
-        }
-
-        @Override
-        public double denormalize(double normalizedPrice) {
-            // Applichiamo la formula inversa: normalizzato * (massimo - minimo) + minimo
-            return normalizedPrice * (priceMax - priceMin) + priceMin;
-        }
-    }
 }
