@@ -1,8 +1,136 @@
-# neural-network
+# Rete Neurale "a mano" per Valutazione Immobiliare
 
-E' una rete neurale fatta "a mano", con la classica funzione di attivazione sigmoide.
-Più nel dettaglio:
-- Ho creato matrici di pesi che collegano i neuroni degli strati di input, lo strato nascosto e quello di output. Questi pesi sono inizializzati con valori casuali per permettere alla rete di apprendere.
-- Ho implementato la funzione sigmoide, che mappa qualsiasi valore in un intervallo tra 0 e 1, e la sua derivata, utilizzata durante l'addestramento.
-- Ho sviluppato il processo di feedforward, che passa gli input attraverso la rete per ottenere gli output. Questo permette alla rete di fare previsioni basate sui dati di input.  
-- Ho implementato l'algoritmo di retropropagazione per addestrare la rete. Questo algoritmo minimizza l'errore aggiornando i pesi in base alla differenza tra gli output attesi e quelli effettivi.
+[![Java Version](https://img.shields.io/badge/Java-21%2B-blue.svg)](https://www.oracle.com/java/technologies/javase-jdk21-downloads.html)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Build](https://img.shields.io/badge/Build-Maven-red.svg)](https://maven.apache.org/)
+
+## 📋 Descrizione del Progetto Dimostrativo
+
+Questo repository contiene un progetto **puramente dimostrativo** di una rete neurale implementata completamente a mano in Java, senza utilizzare framework o librerie di machine learning. L'obiettivo principale è didattico: mostrare i fondamenti dell'implementazione di una rete neurale partendo dai primi principi matematici.
+
+La rete neurale è stata applicata al caso d'uso della valutazione immobiliare come esempio pratico, ma il focus è sulla comprensione dell'algoritmo di backpropagation e del funzionamento interno delle reti neurali artificiali.
+
+## 🧠 Perché Una Rete Neurale Scritta a Mano?
+
+Mentre esistono numerose librerie mature per il machine learning come TensorFlow, PyTorch o DeepLearning4J, questo progetto evita deliberatamente di utilizzarle per:
+
+- **Scopo Educativo** - Comprendere pienamente il funzionamento interno delle reti neurali
+- **Trasparenza Algortimica** - Visualizzare esattamente cosa accade durante l'addestramento e l'inferenza
+- **Controllo Completo** - Implementare ogni aspetto dell'algoritmo senza astrazioni
+- **Semplicità** - Mantenere il codice leggibile e comprensibile senza dipendenze complesse
+
+## 🏗️ Architettura della Rete Neurale
+
+La rete implementata è un percettrone multistrato con:
+
+- **Input Layer** - 5 neuroni rappresentanti le caratteristiche immobiliari
+- **Hidden Layer** - Singolo strato nascosto configurabile (default: 8 neuroni)
+- **Output Layer** - Singolo neurone che produce la stima del prezzo
+- **Funzione di Attivazione** - Sigmoide per l'introduzione di non-linearità
+- **Addestramento** - Backpropagation con discesa stocastica del gradiente
+- **Regolarizzazione** - Implementazione del dropout per prevenire l'overfitting
+
+## 🚀 Installazione
+
+```bash
+# Clona il repository
+git clone git@github.com:gbove73/neural-network.git
+
+# Entra nella directory del progetto
+cd neural-network
+
+# Compila il progetto con Maven
+mvn clean install
+```
+
+## 💻 Esempio di Utilizzo
+
+```java
+// Crea una rete neurale con la configurazione predefinita
+RealEstateNeuralNetwork evaluator = new RealEstateNeuralNetwork();
+
+// Definisce un semplice dataset di addestramento
+double[][] properties = {
+    {80.0, 3.0, 1.0, 2.0, 7.0},   // 220.000€ - appartamento medio in buona zona
+    {150.0, 4.0, 2.0, 3.0, 8.0},  // 380.000€ - appartamento grande in ottima zona
+    {50.0, 2.0, 1.0, 1.0, 5.0}    // 150.000€ - appartamento piccolo in zona media
+};
+double[] prices = {220000.0, 380000.0, 150000.0};
+
+// Addestra il modello per 5000 epoche
+evaluator.train(properties, prices, 5000);
+
+// Stima il prezzo di un nuovo immobile
+double price = evaluator.estimatePrice(100.0, 3, 1, 2, 6);
+System.out.println("Prezzo stimato: €" + (int)price);
+```
+
+## 📚 Struttura del Progetto
+
+### `NeuralNetwork.java`
+
+Il cuore del progetto: implementazione da zero di una rete neurale feedforward con:
+
+- **Inizializzazione dei pesi** - Valori casuali per i collegamenti tra neuroni
+- **Feedforward** - Propagazione del segnale attraverso la rete
+- **Backpropagation** - Calcolo dell'errore e aggiustamento dei pesi
+- **Dropout** - Tecnica per prevenire l'overfitting
+- **Funzioni di attivazione** - Implementazione manuale della funzione sigmoide
+
+### `RealEstateNeuralNetwork.java`
+
+Wrapper che applica la rete neurale al contesto immobiliare:
+
+- **Normalizzazione** - Preprocessamento dei dati per la rete neurale
+- **Interfacce pulite** - Applicazione dei principi SOLID
+- **Pattern Adapter** - Integrazione modulare con la rete neurale
+- **Valutazione** - Metriche per misurare l'accuratezza delle predizioni
+
+### `RealEstateNeuralNetworkTest.java`
+
+Test completi che verificano:
+
+- **Convergenza** - Diminuzione dell'errore durante l'addestramento
+- **Accuratezza** - Capacità predittiva su esempi noti
+- **Generalizzazione** - Comportamento con dati mai visti
+- **Robustezza** - Reazione a scenari limite
+
+## 🛠️ Requisiti Tecnici
+
+- **Java 21+** - Utilizzo delle funzionalità più recenti del linguaggio
+- **Maven** - Gestione delle dipendenze e build automatizzata
+- **SLF4J** - Logging strutturato per debug e tracciabilità
+- **JUnit 5** - Framework per i test automatizzati
+
+## ⚠️ Limitazioni
+
+Essendo un progetto dimostrativo, presenta alcune limitazioni:
+
+- **Performance** - Non ottimizzato per grandi dataset (usa calcoli naïf)
+- **Funzioni di Attivazione** - Implementa solo la funzione sigmoide
+- **Architettura** - Supporta solo una topologia fissa con un singolo strato nascosto
+- **Batch Processing** - Non implementa il mini-batch gradient descent
+
+## 🤝 Come Contribuire
+
+Questo è un progetto didattico, ma i contributi sono benvenuti:
+
+1. Fork del repository
+2. Crea un branch (`git checkout -b feature/miglioramento-xyz`)
+3. Commit delle modifiche (`git commit -m 'Aggiunto xyz'`)
+4. Push al branch (`git push origin feature/miglioramento-xyz`)
+5. Apri una Pull Request
+
+## 📝 Licenza
+
+Questo progetto è rilasciato sotto licenza MIT. Consulta il file `LICENSE` per maggiori dettagli.
+
+## 📞 Contatti
+
+Gianluca Bove - [@gbove73](https://github.com/gbove73)
+
+Repository: [github.com/gbove73/neural-network](https://github.com/gbove73/neural-network)
+
+---
+
+*Questo progetto ha scopo puramente dimostrativo ed educativo. L'implementazione manuale di una rete neurale è un esercizio didattico: in ambito produttivo si consiglia di utilizzare librerie mature e ottimizzate come TensorFlow, PyTorch o DeepLearning4J.*
