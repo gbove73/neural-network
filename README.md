@@ -1,16 +1,16 @@
-# Rete Neurale "a mano" per Valutazione Immobiliare
+# Rete neurale "a mano" per valutazione immobiliare
 
 [![Java Version](https://img.shields.io/badge/Java-21%2B-blue.svg)](https://www.oracle.com/java/technologies/javase-jdk21-downloads.html)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Build](https://img.shields.io/badge/Build-Maven-red.svg)](https://maven.apache.org/)
 
-## 📋 Descrizione del Progetto Dimostrativo
+## 📋 Descrizione del progetto
 
 Questo repository contiene un progetto **puramente dimostrativo** di una rete neurale implementata completamente a mano in Java, senza utilizzare framework o librerie di machine learning. L'obiettivo principale è didattico: mostrare i fondamenti dell'implementazione di una rete neurale partendo dai primi principi matematici.
 
 La rete neurale è stata applicata al caso d'uso della valutazione immobiliare come esempio pratico, ma il focus è sulla comprensione dell'algoritmo di backpropagation e del funzionamento interno delle reti neurali artificiali.
 
-## 🧠 Perché Una Rete Neurale Scritta a Mano?
+## 🧠 Perché una rete neurale scritta a mano?
 
 Mentre esistono numerose librerie mature per il machine learning come TensorFlow, PyTorch o DeepLearning4J, questo progetto evita deliberatamente di utilizzarle per:
 
@@ -19,7 +19,7 @@ Mentre esistono numerose librerie mature per il machine learning come TensorFlow
 - **Controllo Completo** - Implementare ogni aspetto dell'algoritmo senza astrazioni
 - **Semplicità** - Mantenere il codice leggibile e comprensibile senza dipendenze complesse
 
-## 🏗️ Architettura della Rete Neurale
+## 🏗️ Architettura della rete neurale
 
 La rete implementata è un percettrone multistrato con:
 
@@ -65,9 +65,9 @@ double price = evaluator.estimatePrice(100.0, 3, 1, 2, 6);
 System.out.println("Prezzo stimato: €" + (int)price);
 ```
 
-## 📚 Struttura del Progetto
+## 📚 Struttura del progetto
 
-### 🏛️ Organizzazione dei Package
+### 🏛️ Organizzazione dei package
 
 Il progetto è strutturato seguendo i principi di Clean Architecture, che garantisce separazione delle responsabilità e indipendenza dai framework:
 
@@ -101,7 +101,7 @@ it.bove
   - `DefaultPriceNormalizer` - Implementazione concreta per normalizzazione prezzi
   - `DefaultFeatureNormalizer` - Implementazione concreta per normalizzazione caratteristiche
 
-#### Vantaggi dell'Architettura
+#### Vantaggi dell'architettura
 
 - **Indipendenza dai Framework** - Il core e il dominio non dipendono da librerie esterne
 - **Testabilità** - Le interfacce permettono di testare i componenti in isolamento
