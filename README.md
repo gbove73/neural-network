@@ -14,9 +14,9 @@ La rete neurale è stata applicata al caso d'uso della valutazione immobiliare c
 
 Mentre esistono numerose librerie mature per il machine learning come TensorFlow, PyTorch o DeepLearning4J, questo progetto evita deliberatamente di utilizzarle per:
 
-- **Scopo Educativo** - Comprendere pienamente il funzionamento interno delle reti neurali
-- **Trasparenza Algortimica** - Visualizzare esattamente cosa accade durante l'addestramento e l'inferenza
-- **Controllo Completo** - Implementare ogni aspetto dell'algoritmo senza astrazioni
+- **Scopo didattico** - Comprendere pienamente il funzionamento interno delle reti neurali
+- **Trasparenza algortimica** - Visualizzare esattamente cosa accade durante l'addestramento e l'inferenza
+- **Controllo completo** - Implementare ogni aspetto dell'algoritmo senza astrazioni
 - **Semplicità** - Mantenere il codice leggibile e comprensibile senza dipendenze complesse
 
 ## 🏗️ Architettura della rete neurale
@@ -26,7 +26,7 @@ La rete implementata è un percettrone multistrato con:
 - **Input Layer** - 5 neuroni rappresentanti le caratteristiche immobiliari
 - **Hidden Layer** - Singolo strato nascosto configurabile (default: 8 neuroni)
 - **Output Layer** - Singolo neurone che produce la stima del prezzo
-- **Funzione di Attivazione** - Sigmoide per l'introduzione di non-linearità
+- **Funzione di attivazione** - Sigmoide per l'introduzione di non-linearità
 - **Addestramento** - Backpropagation con discesa stocastica del gradiente
 - **Regolarizzazione** - Implementazione del dropout per prevenire l'overfitting
 
@@ -197,9 +197,9 @@ Interfaccia generica per la normalizzazione dei dati:
 Essendo un progetto dimostrativo, presenta alcune limitazioni:
 
 - **Performance** - Non ottimizzato per grandi dataset (usa calcoli naïf)
-- **Funzioni di Attivazione** - Implementa solo la funzione sigmoide
+- **Funzioni di attivazione** - Implementa solo la funzione sigmoide
 - **Architettura** - Supporta solo una topologia fissa con un singolo strato nascosto
-- **Batch Processing** - Non implementa il mini-batch gradient descent
+- **Batch processing** - Non implementa il mini-batch gradient descent
 
 ## 🤝 Come Contribuire
 
