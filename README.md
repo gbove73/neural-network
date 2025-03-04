@@ -183,7 +183,6 @@ Interfaccia generica per la normalizzazione dei dati:
 
 - **Normalizzazione** - Definisce il metodo per normalizzare un valore
 - **Denormalizzazione** - Definisce il metodo per denormalizzare un valore
--
 
 ## 🛠️ Requisiti Tecnici
 
