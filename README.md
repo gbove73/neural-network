@@ -135,6 +135,56 @@ Test completi che verificano:
 - **Generalizzazione** - Comportamento con dati mai visti
 - **Robustezza** - Reazione a scenari limite
 
+### `DefaultFeatureNormalizer.java`
+
+Implementazione predefinita del normalizzatore di caratteristiche:
+
+- **Normalizzazione** - Trasformazione delle caratteristiche degli immobili in un intervallo normalizzato
+- **Denormalizzazione** - Riconversione delle caratteristiche normalizzate ai valori originali
+
+### `DefaultPriceNormalizer.java`
+
+Implementazione predefinita del normalizzatore di prezzi:
+
+- **Normalizzazione** - Trasformazione dei prezzi degli immobili in un intervallo normalizzato
+- **Denormalizzazione** - Riconversione dei prezzi normalizzati ai valori originali
+
+### `FeatureNormalizer.java`
+
+Interfaccia per la normalizzazione delle caratteristiche degli immobili:
+
+- **Normalizzazione** - Definisce il metodo per normalizzare le caratteristiche
+- **Denormalizzazione** - Definisce il metodo per denormalizzare le caratteristiche
+
+### `PriceNormalizer.java`
+
+Interfaccia per la normalizzazione dei prezzi degli immobili:
+
+- **Normalizzazione** - Definisce il metodo per normalizzare i prezzi
+- **Denormalizzazione** - Definisce il metodo per denormalizzare i prezzi
+
+### `NeuralNetworkAdapter.java`
+
+Adapter per la classe `NeuralNetwork` esistente:
+
+- **Train** - Addestra la rete neurale con un esempio
+- **Predict** - Esegue una predizione utilizzando la rete neurale
+
+### `NeuralNetworkModel.java`
+
+Interfaccia che definisce il comportamento di un modello di rete neurale:
+
+- **Train** - Addestra il modello con un esempio
+- **Predict** - Esegue una predizione utilizzando il modello
+
+### `Normalizer.java`
+
+Interfaccia generica per la normalizzazione dei dati:
+
+- **Normalizzazione** - Definisce il metodo per normalizzare un valore
+- **Denormalizzazione** - Definisce il metodo per denormalizzare un valore
+-
+
 ## 🛠️ Requisiti Tecnici
 
 - **Java 21+** - Utilizzo delle funzionalità più recenti del linguaggio
