@@ -123,7 +123,6 @@ Il cuore del progetto: implementazione da zero di una rete neurale feedforward c
 Wrapper che applica la rete neurale al contesto immobiliare:
 
 - **Normalizzazione** - Preprocessamento dei dati per la rete neurale
-- **Interfacce pulite** - Applicazione dei principi SOLID
 - **Pattern Adapter** - Integrazione modulare con la rete neurale
 - **Valutazione** - Metriche per misurare l'accuratezza delle predizioni
 
