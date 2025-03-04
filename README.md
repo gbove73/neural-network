@@ -1,4 +1,4 @@
-# Rete neurale "a mano" per valutazione immobiliare
+# Rete neurale "hand-made" per valutazione immobiliare
 
 [![Java Version](https://img.shields.io/badge/Java-21%2B-blue.svg)](https://www.oracle.com/java/technologies/javase-jdk21-downloads.html)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
