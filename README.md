@@ -214,6 +214,17 @@ Questo è un progetto didattico, ma i contributi sono benvenuti:
 
 Questo progetto è rilasciato sotto licenza MIT. Consulta il file `LICENSE` per maggiori dettagli.
 
+## F.A.Q.
+
+#### Perché hai scelto proprio 8 neuroni per l’hidden layer?
+
+Il numero di neuroni dovrebbe seguire la "rule of thumb" con un valore tra il numero di neuroni di input - in questo
+caso 5, le caratteristiche dell'immobile - e il numero di neuroni di output - in questo caso 1, il prezzo dell'immobile.
+Ne ho scelti 8 per sperimentare l'overfitting, rischio che si corre con troppi neuroni nello strato hidden, e
+verificarne il meccanismo di dropout implementato per mitigarlo. Con troppi neuroni per lo strato nascosto il rischio è
+che la rete neurale si adatti troppo ai dati di addestramento, e quindi il modello impara troppo bene i dettagli e il "
+rumore" del set di dati di addestramento perdendo la capacità di generalizzare su nuovi dati non visti.
+
 ## 📞 Contatti
 
 Gianluca Bove - [@gbove73](https://github.com/gbove73)
