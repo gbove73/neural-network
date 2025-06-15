@@ -4,6 +4,7 @@ import it.bove.infrastructure.normalization.DefaultFeatureNormalizer;
 import it.bove.infrastructure.normalization.DefaultPriceNormalizer;
 import it.bove.infrastructure.nn.NeuralNetworkAdapter;
 import it.bove.core.nn.NeuralNetwork;
+import it.bove.core.activation.ReLUActivationFunction;
 import it.bove.core.nn.NeuralNetworkModel;
 import it.bove.domain.realestate.FeatureNormalizer;
 import it.bove.domain.realestate.PriceNormalizer;
@@ -51,8 +52,8 @@ public class RealEstateNeuralNetwork {
      * Utilizza una rete neurale standard e parametri di normalizzazione comunemente usati.
      */
     public RealEstateNeuralNetwork() {
-        // Creiamo una rete neurale standard: 5 input (caratteristiche), 8 neuroni nascosti, 1 output (prezzo)
-        this.model = new NeuralNetworkAdapter(new NeuralNetwork(5, 8, 1, 0.05, 0.1));
+        // Creiamo una rete neurale con ReLU: 5 input, 8 neuroni nascosti, 1 output (prezzo)
+        this.model = new NeuralNetworkAdapter(new NeuralNetwork(5, 8, 1, 0.05, 0.1, new ReLUActivationFunction()));
 
         // Definiamo i parametri di normalizzazione basati su analisi statistiche del mercato immobiliare
         this.featureNormalizer = new DefaultFeatureNormalizer(new double[]{30.0, 1.0, 1.0, 0.0, 1.0},   // Valori minimi: mq, stanze, bagni, piano, zona

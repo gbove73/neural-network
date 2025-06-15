@@ -116,7 +116,7 @@ Il cuore del progetto: implementazione da zero di una rete neurale feedforward c
 - **Feedforward** - Propagazione del segnale attraverso la rete
 - **Backpropagation** - Calcolo dell'errore e aggiustamento dei pesi
 - **Dropout** - Tecnica per prevenire l'overfitting
-- **Funzioni di attivazione** - Implementazione manuale della funzione sigmoide
+- **Funzioni di attivazione** - Implementazioni di Sigmoide e ReLU
 
 ### `RealEstateNeuralNetwork.java`
 
@@ -196,7 +196,7 @@ Interfaccia generica per la normalizzazione dei dati:
 Essendo un progetto dimostrativo, presenta alcune limitazioni:
 
 - **Performance** - Non ottimizzato per grandi dataset (usa calcoli naïf)
-- **Funzioni di attivazione** - Implementa solo la funzione sigmoide
+- **Funzioni di attivazione** - Supporta Sigmoide e ReLU
 - **Architettura** - Supporta solo una topologia fissa con un singolo strato nascosto
 - **Batch processing** - Non implementa il mini-batch gradient descent
 

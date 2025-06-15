@@ -3,6 +3,9 @@ package it.bove.core.nn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import it.bove.core.activation.ActivationFunction;
+import it.bove.core.activation.SigmoidActivationFunction;
+
 import java.util.Random;
 
 /**
@@ -30,6 +33,8 @@ public class NeuralNetwork {
     private final double dropoutRate;
     // Random per il dropout
     private final Random rand;
+    // Funzione di attivazione utilizzata dai neuroni
+    private final ActivationFunction activationFunction;
 
     /**
      * Costruttore per la classe NeuralNetwork.
@@ -41,6 +46,13 @@ public class NeuralNetwork {
      * @param dropoutRate  Tasso di dropout per disattivare casualmente i neuroni durante l'addestramento.
      */
     public NeuralNetwork(int inputSize, int hiddenSize, int outputSize, double learningRate, double dropoutRate) {
+        this(inputSize, hiddenSize, outputSize, learningRate, dropoutRate, new SigmoidActivationFunction());
+    }
+
+    /**
+     * Costruttore che permette di specificare una funzione di attivazione.
+     */
+    public NeuralNetwork(int inputSize, int hiddenSize, int outputSize, double learningRate, double dropoutRate, ActivationFunction activationFunction) {
         log.debug("Creazione di una nuova rete neurale con {} neuroni di input, {} neuroni nascosti, {} neuroni di output, tasso di apprendimento {} e tasso di dropout {}", inputSize, hiddenSize, outputSize, learningRate, dropoutRate);
 
         // Inizializza la matrice dei pesi tra input e nascosto
@@ -57,6 +69,8 @@ public class NeuralNetwork {
         this.dropoutRate = dropoutRate;
         // Inizializza l'oggetto Random
         this.rand = new Random();
+        // Imposta la funzione di attivazione
+        this.activationFunction = activationFunction;
 
         // Chiama il metodo per inizializzare i pesi con valori casuali
         initializeWeights();
@@ -147,8 +161,8 @@ public class NeuralNetwork {
             for (int j = 0; j < inputs.length; j++) { // Ciclo per ogni neurone di input
                 outputs[i] += inputs[j] * weights[j][i]; // Somma il prodotto dell'input e del peso al valore del neurone di output
             }
-            outputs[i] = sigmoid(outputs[i]); // Applica la funzione sigmoide al valore del neurone di output
-            log.debug("Valore del neurone {} dopo l'applicazione della funzione sigmoide: {}", i, outputs[i]);
+            outputs[i] = activationFunction.activate(outputs[i]); // Applica la funzione di attivazione
+            log.debug("Valore del neurone {} dopo l'applicazione della funzione di attivazione: {}", i, outputs[i]);
         }
     }
 
@@ -259,7 +273,7 @@ public class NeuralNetwork {
         for (int i = 0; i < weights.length; i++) { // Ciclo per ogni neurone di input
             for (int j = 0; j < weights[i].length; j++) { // Ciclo per ogni neurone di output
                 // Aggiorna il peso tra neurone di input e neurone di output
-                weights[i][j] += learningRate * layerErrors[j] * sigmoidDerivative(layerOutputs[j]) * layerInputs[i];
+                weights[i][j] += learningRate * layerErrors[j] * activationFunction.derivative(layerOutputs[j]) * layerInputs[i];
                 log.debug("Aggiornamento del peso tra il neurone {} e il neurone {}: nuovo peso {}", i, j, weights[i][j]);
             }
         }
