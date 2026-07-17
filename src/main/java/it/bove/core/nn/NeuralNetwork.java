@@ -1,269 +1,462 @@
 package it.bove.core.nn;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Random;
+import java.util.Arrays;
+import java.util.random.RandomGenerator;
+import java.util.random.RandomGeneratorFactory;
 
 /**
- * Una semplice rete neurale con un singolo strato nascosto.
- * Uno strato nascosto in una rete neurale è uno strato di neuroni che si trova tra lo strato di input e lo strato di output.
- * Non è direttamente visibile né agli input né agli output della rete.
- * Il suo scopo principale è quello di elaborare e trasformare i dati ricevuti dallo strato di input,
- * applicando una serie di pesi e funzioni di attivazione, per poi passare i risultati allo strato di output.
- * Gli strati nascosti permettono alla rete neurale di apprendere e rappresentare relazioni complesse nei dati.
+ * Percettrone multistrato con un solo strato nascosto.
+ *
+ * <p>Una rete neurale può essere immaginata come una catena di piccoli calcolatori,
+ * chiamati neuroni. Ogni neurone riceve alcuni numeri, attribuisce a ciascuno
+ * un'importanza (il peso), aggiunge una correzione personale (il bias) e trasforma
+ * il risultato con una funzione di attivazione. In questa classe i numeri attraversano
+ * tre livelli:</p>
+ *
+ * <ol>
+ *   <li>lo strato di input riceve i dati così come sono;</li>
+ *   <li>lo strato nascosto combina quei dati e apprende relazioni non lineari;</li>
+ *   <li>lo strato di output produce la previsione finale.</li>
+ * </ol>
+ *
+ * <p>L'implementazione lascia volutamente visibili forward pass e backpropagation.
+ * Una libreria professionale nasconderebbe questi dettagli dietro operazioni su
+ * matrici; qui, invece, cicli e formule restano espliciti per permettere di seguire
+ * il percorso di ogni valore.</p>
  */
-public class NeuralNetwork {
-    private static final Logger log = LoggerFactory.getLogger(NeuralNetwork.class);
+public final class NeuralNetwork {
 
-    // Matrice dei pesi tra lo strato di input e lo strato nascosto
-    private final double[][] weightsInputHidden;
-    // Matrice dei pesi tra lo strato nascosto e lo strato di output
-    private final double[][] weightsHiddenOutput;
-    // Array che rappresenta i neuroni dello strato nascosto
-    private final double[] hiddenLayer;
-    // Array che rappresenta i neuroni dello strato di output
-    private final double[] outputLayer;
-    // Tasso di apprendimento per l'aggiornamento dei pesi
+    /*
+     * Una matrice è una tabella di numeri. La cella [i][j] contiene il peso del
+     * collegamento che parte dal neurone i e arriva al neurone j.
+     */
+    private final double[][] inputHiddenWeights;
+    private final double[][] hiddenOutputWeights;
+
+    /*
+     * Il bias è un valore aggiunto alla somma pesata. È simile alla possibilità
+     * di spostare una soglia verso destra o sinistra: senza bias, un neurone
+     * sarebbe inutilmente vincolato a una soglia centrata nello zero.
+     */
+    private final double[] hiddenBiases;
+    private final double[] outputBiases;
+
+    /*
+     * Il learning rate stabilisce quanto correggere i parametri a ogni esempio:
+     * troppo piccolo rallenta l'apprendimento, troppo grande può farlo oscillare.
+     */
     private final double learningRate;
-    // Tasso di dropout
+
+    /*
+     * Il dropout spegne temporaneamente alcuni neuroni durante il training.
+     * In questo modo la rete non può affidarsi sempre agli stessi percorsi.
+     */
     private final double dropoutRate;
-    // Random per il dropout
-    private final Random rand;
+
+    /*
+     * Tutta la casualità passa da un unico generatore. Partendo dallo stesso seed
+     * si ottengono gli stessi pesi e le stesse maschere di dropout: un requisito
+     * fondamentale per ripetere un esperimento e capire perché ha dato un risultato.
+     */
+    private final RandomGenerator randomGenerator;
 
     /**
-     * Costruttore per la classe NeuralNetwork.
-     *
-     * @param inputSize    Numero di neuroni nello strato di input.
-     * @param hiddenSize   Numero di neuroni nello strato nascosto.
-     * @param outputSize   Numero di neuroni nello strato di output.
-     * @param learningRate Tasso di apprendimento per l'aggiornamento dei pesi.
-     * @param dropoutRate  Tasso di dropout per disattivare casualmente i neuroni durante l'addestramento.
+     * Crea una rete usando un seed non deterministico.
      */
-    public NeuralNetwork(int inputSize, int hiddenSize, int outputSize, double learningRate, double dropoutRate) {
-        log.debug("Creazione di una nuova rete neurale con {} neuroni di input, {} neuroni nascosti, {} neuroni di output, tasso di apprendimento {} e tasso di dropout {}", inputSize, hiddenSize, outputSize, learningRate, dropoutRate);
+    public NeuralNetwork(
+            int inputSize,
+            int hiddenSize,
+            int outputSize,
+            double learningRate,
+            double dropoutRate
+    ) {
+        this(new NeuralNetworkConfiguration(
+                inputSize,
+                hiddenSize,
+                outputSize,
+                learningRate,
+                dropoutRate,
+                System.nanoTime()
+        ));
+    }
 
-        // Inizializza la matrice dei pesi tra input e nascosto
-        this.weightsInputHidden = new double[inputSize][hiddenSize];
-        // Inizializza la matrice dei pesi tra nascosto e output
-        this.weightsHiddenOutput = new double[hiddenSize][outputSize];
-        // Inizializza l'array dei neuroni nascosti
-        this.hiddenLayer = new double[hiddenSize];
-        // Inizializza l'array dei neuroni di output
-        this.outputLayer = new double[outputSize];
-        // Imposta il tasso di apprendimento
-        this.learningRate = learningRate;
-        // Imposta il tasso di dropout
-        this.dropoutRate = dropoutRate;
-        // Inizializza l'oggetto Random
-        this.rand = new Random();
-
-        // Chiama il metodo per inizializzare i pesi con valori casuali
+    /**
+     * Crea una rete a partire da una configurazione validata.
+     *
+     * @param configuration configurazione della rete
+     */
+    public NeuralNetwork(NeuralNetworkConfiguration configuration) {
+        this.learningRate = configuration.learningRate();
+        this.dropoutRate = configuration.dropoutRate();
+        this.randomGenerator = RandomGeneratorFactory.getDefault().create(configuration.seed());
+        this.inputHiddenWeights = new double[configuration.inputSize()][configuration.hiddenSize()];
+        this.hiddenOutputWeights = new double[configuration.hiddenSize()][configuration.outputSize()];
+        this.hiddenBiases = new double[configuration.hiddenSize()];
+        this.outputBiases = new double[configuration.outputSize()];
         initializeWeights();
     }
 
     /**
-     * Inizializza i pesi della rete neurale con valori casuali compresi tra -0.5 e 0.5.
-     * I pesi determinano l'importanza di un neurone rispetto a un altro.
-     */
-    private void initializeWeights() {
-        log.debug("Inizializzazione dei pesi della rete neurale");
-        Random rand = new Random(); // Crea un oggetto Random per generare numeri casuali
-
-        // Inizializza i pesi tra lo strato di input e lo strato nascosto
-        initializeLayerWeights(weightsInputHidden, rand);
-        // Inizializza i pesi tra lo strato nascosto e lo strato di output
-        initializeLayerWeights(weightsHiddenOutput, rand);
-    }
-
-    /**
-     * Inizializza i pesi di un determinato strato con valori casuali.
+     * Calcola una previsione senza dropout.
      *
-     * @param weights Matrice dei pesi da inizializzare.
-     * @param rand    Oggetto Random per generare numeri casuali.
-     */
-    private void initializeLayerWeights(double[][] weights, Random rand) {
-        for (int i = 0; i < weights.length; i++) { // Ciclo per ogni neurone di input
-            for (int j = 0; j < weights[i].length; j++) { // Ciclo per ogni neurone nascosto
-                weights[i][j] = rand.nextDouble() - 0.5; // Assegna un valore casuale al peso
-                log.debug("Impostato peso tra neurone {} e neurone {} a {}", i, j, weights[i][j]);
-            }
-        }
-    }
-
-    /**
-     * Calcola la funzione di attivazione sigmoide.
-     * La funzione sigmoide è una funzione matematica che mappa qualsiasi valore in un intervallo tra 0 e 1.
-     *
-     * @param x Valore di input.
-     * @return Valore di output dopo l'applicazione della funzione sigmoide.
-     */
-    public double sigmoid(double x) {
-        log.debug("Calcolo della funzione sigmoide per il valore {}", x);
-        return 1.0 / (1.0 + Math.exp(-x)); // Formula della funzione sigmoide
-    }
-
-    /**
-     * Calcola la derivata della funzione di attivazione sigmoide.
-     * La derivata della funzione sigmoide è utilizzata durante l'addestramento della rete neurale.
-     *
-     * @param x Valore di input.
-     * @return Valore della derivata della funzione sigmoide.
-     */
-    public double sigmoidDerivative(double x) {
-        log.debug("Calcolo della derivata della funzione sigmoide per il valore {}", x);
-        return x * (1.0 - x); // Formula della derivata della funzione sigmoide
-    }
-
-    /**
-     * Esegue il feedforward della rete neurale.
-     * Il feedforward è il processo di passare gli input attraverso la rete per ottenere gli output.
-     *
-     * @param inputs Array di input per la rete neurale.
-     * @return Array di output della rete neurale.
+     * @param inputs valori di ingresso
+     * @return nuovo array contenente gli output
      */
     public double[] feedForward(double[] inputs) {
-        log.debug("Esecuzione del feedforward con input {}", inputs);
-
-        // Calcola i valori dei neuroni nello strato nascosto
-        calculateLayerOutputs(inputs, hiddenLayer, weightsInputHidden);
-        // Calcola i valori dei neuroni nello strato di output
-        calculateLayerOutputs(hiddenLayer, outputLayer, weightsHiddenOutput);
-
-        log.debug("Risultato del feedforward: {}", outputLayer);
-        return outputLayer; // Restituisce l'array dei valori dei neuroni di output
+        validateInput(inputs);
+        /*
+         * In previsione il dropout è disattivato: vogliamo usare l'intera rete
+         * che è stata appresa, non spegnere collegamenti in modo casuale.
+         */
+        return forward(inputs, false).outputs();
     }
 
     /**
-     * Calcola i valori dei neuroni in un determinato strato.
+     * Esegue un aggiornamento SGD su un singolo esempio.
      *
-     * @param inputs  Array di input per il calcolo.
-     * @param outputs Array di output per il calcolo.
-     * @param weights Matrice dei pesi tra gli input e gli output.
-     */
-    private void calculateLayerOutputs(double[] inputs, double[] outputs, double[][] weights) {
-        for (int i = 0; i < outputs.length; i++) { // Ciclo per ogni neurone di output
-            outputs[i] = 0; // Inizializza il valore del neurone di output a 0
-            for (int j = 0; j < inputs.length; j++) { // Ciclo per ogni neurone di input
-                outputs[i] += inputs[j] * weights[j][i]; // Somma il prodotto dell'input e del peso al valore del neurone di output
-            }
-            outputs[i] = sigmoid(outputs[i]); // Applica la funzione sigmoide al valore del neurone di output
-            log.debug("Valore del neurone {} dopo l'applicazione della funzione sigmoide: {}", i, outputs[i]);
-        }
-    }
-
-    /**
-     * Applica il dropout ai neuroni di un determinato strato.
-     * Il dropout è una tecnica di regolarizzazione utilizzata per prevenire l'overfitting
-     * nelle reti neurali. Durante l'addestramento, disattiva casualmente una frazione
-     * dei neuroni, riducendo la possibilità che la rete neurale si adatti troppo ai dati
-     * di addestramento. I neuroni disattivati vengono impostati a 0.
-     *
-     * @param layer Array dei neuroni del livello. Questo array rappresenta i valori
-     *              dei neuroni in uno specifico strato della rete neurale.
-     */
-    private void applyDropout(double[] layer) {
-        // Itera su ogni neurone del livello
-        for (int i = 0; i < layer.length; i++) {
-            // Verifica se il neurone deve essere disattivato in base al tasso di dropout
-            if (isNeuronDropped()) {
-                // Imposta il valore del neurone a 0, disattivandolo
-                layer[i] = 0;
-                log.debug("Neurone {} disattivato dal dropout", i);
-            }
-        }
-    }
-
-    /**
-     * Determina se un neurone deve essere disattivato in base al tasso di dropout.
-     *
-     * @return true se il neurone deve essere disattivato, false altrimenti.
-     */
-    private boolean isNeuronDropped() {
-        // Genera un numero casuale tra 0.0 e 1.0 e verifica se è inferiore al tasso di dropout.
-        // Se il numero casuale è inferiore al tasso di dropout, il neurone viene disattivato.
-        return rand.nextDouble() < dropoutRate;
-    }
-
-    /**
-     * Allena la rete neurale utilizzando l'algoritmo di retropropagazione.
-     * La retropropagazione è un algoritmo per l'addestramento delle reti neurali che minimizza l'errore.
-     *
-     * @param inputs          Array di input per la rete neurale.
-     * @param expectedOutputs Array di output attesi per la rete neurale.
+     * @param inputs input normalizzati
+     * @param expectedOutputs output attesi normalizzati
      */
     public void train(double[] inputs, double[] expectedOutputs) {
-        log.debug("Inizio dell'addestramento con input {} e output attesi {}", inputs, expectedOutputs);
+        validateInput(inputs);
+        validateExpectedOutput(expectedOutputs);
 
-        double[] outputs = feedForward(inputs); // Esegue il feedforward per ottenere gli output attuali
-        double[] outputErrors = calculateErrors(expectedOutputs, outputs); // Calcola gli errori dei neuroni di output
-        double[] hiddenErrors = calculateHiddenErrors(outputErrors); // Calcola gli errori dei neuroni nascosti
-
-        // Applica il dropout allo strato nascosto
-        applyDropout(hiddenLayer);
-
-        // Aggiorna i pesi tra lo strato nascosto e lo strato di output
-        updateWeights(weightsHiddenOutput, hiddenLayer, outputErrors, outputLayer);
-        // Aggiorna i pesi tra lo strato di input e lo strato nascosto
-        updateWeights(weightsInputHidden, inputs, hiddenErrors, hiddenLayer);
-
-        log.debug("Fine dell'addestramento");
+        /*
+         * L'apprendimento di un esempio avviene in tre fasi:
+         * 1. la rete produce una previsione;
+         * 2. la backpropagation misura la responsabilità di ogni parametro;
+         * 3. pesi e bias vengono mossi nella direzione che riduce l'errore.
+         */
+        ForwardPass forwardPass = forward(inputs, true);
+        Gradients gradients = calculateGradients(inputs, expectedOutputs, forwardPass);
+        applyGradients(gradients);
     }
 
     /**
-     * Calcola gli errori dei neuroni di output.
-     * L'errore è la differenza tra l'output atteso e l'output attuale.
-     *
-     * @param expectedOutputs Array di output attesi.
-     * @param actualOutputs   Array di output attuali.
-     * @return Array degli errori dei neuroni di output.
+     * Funzione sigmoide numericamente stabile.
      */
-    private double[] calculateErrors(double[] expectedOutputs, double[] actualOutputs) {
-        double[] errors = new double[actualOutputs.length];
-        for (int i = 0; i < errors.length; i++) { // Ciclo per ogni neurone di output
-            errors[i] = expectedOutputs[i] - actualOutputs[i]; // Calcola l'errore come differenza tra output atteso e output attuale
-            log.debug("Errore per il neurone {}: atteso {}, ottenuto {}, errore {}", i, expectedOutputs[i], actualOutputs[i], errors[i]);
+    public double sigmoid(double value) {
+        /*
+         * La formula classica è 1 / (1 + e^-x). Separare valori positivi e
+         * negativi evita che l'esponenziale diventi così grande da andare in
+         * overflow, pur calcolando esattamente la stessa funzione.
+         */
+        if (value >= 0) {
+            double exponential = Math.exp(-value);
+            return 1.0 / (1.0 + exponential);
         }
-        return errors;
+        double exponential = Math.exp(value);
+        return exponential / (1.0 + exponential);
     }
 
     /**
-     * Calcola gli errori dei neuroni nascosti.
-     * L'errore dei neuroni nascosti è calcolato in base agli errori dei neuroni di output.
-     *
-     * @param outputErrors Array degli errori dei neuroni di output.
-     * @return Array degli errori dei neuroni nascosti.
+     * Derivata della sigmoide calcolata a partire dal suo output.
      */
-    private double[] calculateHiddenErrors(double[] outputErrors) {
-        double[] hiddenErrors = new double[hiddenLayer.length];
-        for (int i = 0; i < hiddenErrors.length; i++) { // Ciclo per ogni neurone nascosto
-            hiddenErrors[i] = 0; // Inizializza l'errore del neurone nascosto a 0
-            for (int j = 0; j < outputErrors.length; j++) { // Ciclo per ogni neurone di output
-                hiddenErrors[i] += outputErrors[j] * weightsHiddenOutput[i][j]; // Somma il prodotto dell'errore di output e del peso all'errore del neurone nascosto
+    public double sigmoidDerivative(double sigmoidOutput) {
+        return sigmoidOutput * (1.0 - sigmoidOutput);
+    }
+
+    /**
+     * Calcola la loss quadratica media per un singolo esempio.
+     */
+    public double calculateLoss(double[] inputs, double[] expectedOutputs) {
+        validateInput(inputs);
+        validateExpectedOutput(expectedOutputs);
+        double[] outputs = feedForward(inputs);
+        double squaredError = 0.0;
+        for (int index = 0; index < outputs.length; index++) {
+            double error = outputs[index] - expectedOutputs[index];
+            squaredError += error * error;
+        }
+        return squaredError / (2.0 * outputs.length);
+    }
+
+    private void initializeWeights() {
+        initializeLayerWeights(inputHiddenWeights, inputHiddenWeights.length);
+        initializeLayerWeights(hiddenOutputWeights, hiddenOutputWeights.length);
+    }
+
+    private void initializeLayerWeights(double[][] weights, int fanIn) {
+        /*
+         * Se tutti i pesi partissero da zero, i neuroni imparerebbero tutti la
+         * stessa cosa. Usiamo quindi valori casuali. L'intervallo Xavier tiene
+         * conto di quanti collegamenti entrano ed escono dal layer: così le somme
+         * iniziali non sono né quasi nulle né tanto grandi da saturare la sigmoide.
+         */
+        double limit = Math.sqrt(6.0 / (fanIn + weights[0].length));
+        for (double[] row : weights) {
+            for (int column = 0; column < row.length; column++) {
+                row[column] = randomGenerator.nextDouble(-limit, limit);
             }
-            log.debug("Errore del neurone nascosto {}: {}", i, hiddenErrors[i]);
         }
-        return hiddenErrors;
     }
 
-    /**
-     * Aggiorna i pesi della rete neurale.
-     * I pesi vengono aggiornati in base agli errori e al tasso di apprendimento.
-     *
-     * @param weights      Matrice dei pesi da aggiornare.
-     * @param layerInputs  Array degli input per il livello.
-     * @param layerErrors  Array degli errori per il livello.
-     * @param layerOutputs Array degli output per il livello.
-     */
-    private void updateWeights(double[][] weights, double[] layerInputs, double[] layerErrors, double[] layerOutputs) {
-        for (int i = 0; i < weights.length; i++) { // Ciclo per ogni neurone di input
-            for (int j = 0; j < weights[i].length; j++) { // Ciclo per ogni neurone di output
-                // Aggiorna il peso tra neurone di input e neurone di output
-                weights[i][j] += learningRate * layerErrors[j] * sigmoidDerivative(layerOutputs[j]) * layerInputs[i];
-                log.debug("Aggiornamento del peso tra il neurone {} e il neurone {}: nuovo peso {}", i, j, weights[i][j]);
+    private ForwardPass forward(double[] inputs, boolean training) {
+        /*
+         * Primo passaggio: ogni neurone nascosto calcola
+         *
+         * sigmoide(bias + input1*peso1 + input2*peso2 + ...).
+         *
+         * Conserviamo sia il valore originale sia quello dopo il dropout.
+         * Il valore originale serve più tardi per calcolare la derivata corretta.
+         */
+        double[] rawHiddenOutputs = activateLayer(inputs, inputHiddenWeights, hiddenBiases);
+        double[] hiddenOutputs = Arrays.copyOf(rawHiddenOutputs, rawHiddenOutputs.length);
+        double[] dropoutScales = new double[hiddenOutputs.length];
+        Arrays.fill(dropoutScales, 1.0);
+
+        if (training && dropoutRate > 0.0) {
+            /*
+             * "Inverted dropout": se, per esempio, conserviamo in media il 75%
+             * dei neuroni, quelli rimasti vengono moltiplicati per 1 / 0,75.
+             * La loro intensità media resta così uguale a quella usata in previsione,
+             * quando nessun neurone viene spento.
+             */
+            double retainedScale = 1.0 / (1.0 - dropoutRate);
+            for (int index = 0; index < hiddenOutputs.length; index++) {
+                dropoutScales[index] = randomGenerator.nextDouble() < dropoutRate ? 0.0 : retainedScale;
+                hiddenOutputs[index] *= dropoutScales[index];
+            }
+        }
+
+        // Secondo passaggio: gli output nascosti diventano gli input del layer finale.
+        double[] outputs = activateLayer(hiddenOutputs, hiddenOutputWeights, outputBiases);
+        return new ForwardPass(rawHiddenOutputs, hiddenOutputs, dropoutScales, outputs);
+    }
+
+    private double[] activateLayer(double[] inputs, double[][] weights, double[] biases) {
+        double[] outputs = new double[biases.length];
+        for (int outputIndex = 0; outputIndex < outputs.length; outputIndex++) {
+            /*
+             * Partiamo dal bias del neurone. Il ciclo interno visita poi tutti
+             * i valori in ingresso e aggiunge input × peso. Questa è la "somma
+             * pesata" citata nella teoria delle reti neurali.
+             */
+            double weightedSum = biases[outputIndex];
+            for (int inputIndex = 0; inputIndex < inputs.length; inputIndex++) {
+                weightedSum += inputs[inputIndex] * weights[inputIndex][outputIndex];
+            }
+            outputs[outputIndex] = sigmoid(weightedSum);
+        }
+        return outputs;
+    }
+
+    private Gradients calculateGradients(
+            double[] inputs,
+            double[] expectedOutputs,
+            ForwardPass forwardPass
+    ) {
+        /*
+         * Un delta indica quanto la loss cambierebbe al variare della somma
+         * ricevuta da un neurone. Per il layer di output applichiamo la regola
+         * della catena:
+         *
+         * delta output = (previsione - valore atteso) × derivata sigmoide.
+         *
+         * Il primo fattore deriva dalla loss quadratica; il secondo traduce una
+         * variazione dell'uscita in una variazione della somma prima della sigmoide.
+         */
+        double[] outputDeltas = new double[outputBiases.length];
+        for (int outputIndex = 0; outputIndex < outputDeltas.length; outputIndex++) {
+            double errorDerivative = forwardPass.outputs()[outputIndex] - expectedOutputs[outputIndex];
+            outputDeltas[outputIndex] =
+                    errorDerivative * sigmoidDerivative(forwardPass.outputs()[outputIndex]);
+        }
+
+        /*
+         * Lo strato nascosto non conosce direttamente il risultato atteso.
+         * Riceve quindi "all'indietro" i delta degli output, pesati per la forza
+         * dei collegamenti che li uniscono. Applichiamo poi la derivata della
+         * sua sigmoide e la stessa maschera di dropout usata nel forward pass.
+         *
+         * Usare la stessa maschera è essenziale: non avrebbe senso attribuire
+         * un errore a un neurone che era stato spento quando è nata la previsione.
+         */
+        double[] hiddenDeltas = new double[hiddenBiases.length];
+        for (int hiddenIndex = 0; hiddenIndex < hiddenDeltas.length; hiddenIndex++) {
+            double propagatedDelta = 0.0;
+            for (int outputIndex = 0; outputIndex < outputDeltas.length; outputIndex++) {
+                propagatedDelta += outputDeltas[outputIndex] * hiddenOutputWeights[hiddenIndex][outputIndex];
+            }
+            hiddenDeltas[hiddenIndex] = propagatedDelta
+                    * sigmoidDerivative(forwardPass.rawHiddenOutputs()[hiddenIndex])
+                    * forwardPass.dropoutScales()[hiddenIndex];
+        }
+
+        /*
+         * Per un collegamento, gradiente = valore in ingresso × delta in uscita.
+         * L'outer product calcola questa moltiplicazione per ogni coppia possibile
+         * e produce una tabella della stessa forma della matrice dei pesi.
+         */
+        double[][] hiddenOutputGradients =
+                outerProduct(forwardPass.hiddenOutputs(), outputDeltas);
+        double[][] inputHiddenGradients = outerProduct(inputs, hiddenDeltas);
+        return new Gradients(
+                inputHiddenGradients,
+                hiddenOutputGradients,
+                hiddenDeltas,
+                outputDeltas
+        );
+    }
+
+    private double[][] outerProduct(double[] inputs, double[] deltas) {
+        double[][] gradients = new double[inputs.length][deltas.length];
+        for (int inputIndex = 0; inputIndex < inputs.length; inputIndex++) {
+            for (int deltaIndex = 0; deltaIndex < deltas.length; deltaIndex++) {
+                gradients[inputIndex][deltaIndex] = inputs[inputIndex] * deltas[deltaIndex];
+            }
+        }
+        return gradients;
+    }
+
+    private void applyGradients(Gradients gradients) {
+        /*
+         * Gradient descent:
+         *
+         * nuovo parametro = vecchio parametro - learning rate × gradiente.
+         *
+         * Sottraiamo perché il gradiente punta verso la crescita più rapida
+         * della loss, mentre noi vogliamo percorrere la direzione opposta.
+         */
+        subtractScaled(inputHiddenWeights, gradients.inputHiddenWeights());
+        subtractScaled(hiddenOutputWeights, gradients.hiddenOutputWeights());
+        subtractScaled(hiddenBiases, gradients.hiddenBiases());
+        subtractScaled(outputBiases, gradients.outputBiases());
+    }
+
+    private void subtractScaled(double[][] parameters, double[][] gradients) {
+        for (int row = 0; row < parameters.length; row++) {
+            subtractScaled(parameters[row], gradients[row]);
+        }
+    }
+
+    private void subtractScaled(double[] parameters, double[] gradients) {
+        for (int index = 0; index < parameters.length; index++) {
+            parameters[index] -= learningRate * gradients[index];
+        }
+    }
+
+    private void validateInput(double[] inputs) {
+        validateFiniteArray(inputs, "Gli input");
+        if (inputs.length != inputHiddenWeights.length) {
+            throw new IllegalArgumentException(
+                    "Attesi %d input, ricevuti %d".formatted(inputHiddenWeights.length, inputs.length)
+            );
+        }
+    }
+
+    private void validateExpectedOutput(double[] expectedOutputs) {
+        validateFiniteArray(expectedOutputs, "Gli output attesi");
+        if (expectedOutputs.length != outputBiases.length) {
+            throw new IllegalArgumentException(
+                    "Attesi %d output, ricevuti %d".formatted(outputBiases.length, expectedOutputs.length)
+            );
+        }
+    }
+
+    private void validateFiniteArray(double[] values, String label) {
+        if (values == null) {
+            throw new IllegalArgumentException(label + " non possono essere null");
+        }
+        for (double value : values) {
+            if (!Double.isFinite(value)) {
+                throw new IllegalArgumentException(label + " devono contenere solo valori finiti");
             }
         }
     }
 
+    /*
+     * I metodi seguenti sono visibili soltanto ai test dello stesso package.
+     * Consentono il gradient checking, cioè il confronto tra la derivata analitica
+     * della backpropagation e una derivata numerica ottenuta perturbando i pesi.
+     * Non fanno parte dell'API destinata a chi usa la rete.
+     */
+    double[] parametersSnapshot() {
+        return flatten(inputHiddenWeights, hiddenOutputWeights, hiddenBiases, outputBiases);
+    }
 
+    void restoreParameters(double[] parameters) {
+        int expectedSize = parametersSnapshot().length;
+        if (parameters == null || parameters.length != expectedSize) {
+            throw new IllegalArgumentException("Numero di parametri non valido");
+        }
+        int offset = 0;
+        offset = restore(inputHiddenWeights, parameters, offset);
+        offset = restore(hiddenOutputWeights, parameters, offset);
+        offset = restore(hiddenBiases, parameters, offset);
+        restore(outputBiases, parameters, offset);
+    }
+
+    double[] gradientSnapshot(double[] inputs, double[] expectedOutputs) {
+        validateInput(inputs);
+        validateExpectedOutput(expectedOutputs);
+        Gradients gradients = calculateGradients(inputs, expectedOutputs, forward(inputs, false));
+        return flatten(
+                gradients.inputHiddenWeights(),
+                gradients.hiddenOutputWeights(),
+                gradients.hiddenBiases(),
+                gradients.outputBiases()
+        );
+    }
+
+    private double[] flatten(
+            double[][] firstMatrix,
+            double[][] secondMatrix,
+            double[] firstVector,
+            double[] secondVector
+    ) {
+        int size = matrixSize(firstMatrix) + matrixSize(secondMatrix)
+                + firstVector.length + secondVector.length;
+        double[] flattened = new double[size];
+        int offset = 0;
+        offset = flatten(firstMatrix, flattened, offset);
+        offset = flatten(secondMatrix, flattened, offset);
+        offset = flatten(firstVector, flattened, offset);
+        flatten(secondVector, flattened, offset);
+        return flattened;
+    }
+
+    private int matrixSize(double[][] matrix) {
+        return matrix.length * matrix[0].length;
+    }
+
+    private int flatten(double[][] matrix, double[] destination, int offset) {
+        for (double[] row : matrix) {
+            offset = flatten(row, destination, offset);
+        }
+        return offset;
+    }
+
+    private int flatten(double[] vector, double[] destination, int offset) {
+        System.arraycopy(vector, 0, destination, offset, vector.length);
+        return offset + vector.length;
+    }
+
+    private int restore(double[][] matrix, double[] source, int offset) {
+        for (double[] row : matrix) {
+            offset = restore(row, source, offset);
+        }
+        return offset;
+    }
+
+    private int restore(double[] vector, double[] source, int offset) {
+        System.arraycopy(source, offset, vector, 0, vector.length);
+        return offset + vector.length;
+    }
+
+    private record ForwardPass(
+            double[] rawHiddenOutputs,
+            double[] hiddenOutputs,
+            double[] dropoutScales,
+            double[] outputs
+    ) {
+    }
+
+    private record Gradients(
+            double[][] inputHiddenWeights,
+            double[][] hiddenOutputWeights,
+            double[] hiddenBiases,
+            double[] outputBiases
+    ) {
+    }
 }

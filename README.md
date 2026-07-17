@@ -4,228 +4,403 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Build](https://img.shields.io/badge/Build-Maven-red.svg)](https://maven.apache.org/)
 
-## 📋 Descrizione del progetto
+## Descrizione del progetto
 
-Questo repository contiene un progetto **puramente dimostrativo** di una rete neurale implementata completamente a mano in Java, senza utilizzare framework o librerie di machine learning. L'obiettivo principale è didattico: mostrare i fondamenti dell'implementazione di una rete neurale partendo dai primi principi matematici.
+Questo repository contiene una rete neurale realizzata interamente in Java, senza TensorFlow, PyTorch o altre librerie di machine learning. Lo scopo è puramente didattico: rendere visibili i calcoli che una libreria professionale normalmente nasconde.
 
-La rete neurale è stata applicata al caso d'uso della valutazione immobiliare come esempio pratico, ma il focus è sulla comprensione dell'algoritmo di backpropagation e del funzionamento interno delle reti neurali artificiali.
+Il progetto usa la stima del prezzo di un immobile come esempio concreto. Non vuole sostituire una perizia o un modello addestrato su dati di mercato reali. Il dominio immobiliare serve a dare un significato intuitivo agli input e all’output:
 
-## 🧠 Perché una rete neurale scritta a mano?
+1. superficie in metri quadrati;
+2. numero di stanze;
+3. numero di bagni;
+4. piano;
+5. valutazione della zona da 1 a 10;
+6. prezzo stimato in euro come risultato.
 
-Mentre esistono numerose librerie mature per il machine learning come TensorFlow, PyTorch o DeepLearning4J, questo progetto evita deliberatamente di utilizzarle per:
+Leggendo il codice è possibile seguire l’intero percorso di un dato: dalla normalizzazione iniziale, al forward pass, al calcolo dell’errore, alla backpropagation, fino all’aggiornamento di pesi e bias.
 
-- **Scopo didattico** - Comprendere pienamente il funzionamento interno delle reti neurali
-- **Trasparenza algortimica** - Visualizzare esattamente cosa accade durante l'addestramento e l'inferenza
-- **Controllo completo** - Implementare ogni aspetto dell'algoritmo senza astrazioni
-- **Semplicità** - Mantenere il codice leggibile e comprensibile senza dipendenze complesse
+## Che cos’è una rete neurale?
 
-## 🏗️ Architettura della rete neurale
+Una rete neurale è un sistema composto da piccoli elementi di calcolo chiamati neuroni. Ogni neurone:
 
-La rete implementata è un percettrone multistrato con:
+1. riceve alcuni numeri;
+2. moltiplica ogni numero per un peso, che rappresenta l’importanza di quel collegamento;
+3. somma i risultati;
+4. aggiunge un bias, cioè una correzione indipendente dagli input;
+5. applica una funzione di attivazione;
+6. passa il risultato ai neuroni successivi.
 
-- **Input Layer** - 5 neuroni rappresentanti le caratteristiche immobiliari
-- **Hidden Layer** - Singolo strato nascosto configurabile (default: 8 neuroni)
-- **Output Layer** - Singolo neurone che produce la stima del prezzo
-- **Funzione di attivazione** - Sigmoide per l'introduzione di non-linearità
-- **Addestramento** - Backpropagation con discesa stocastica del gradiente
-- **Regolarizzazione** - Implementazione del dropout per prevenire l'overfitting
+Il termine “apprendimento” indica la modifica progressiva di pesi e bias per ridurre la distanza tra le previsioni e i risultati attesi.
 
-## 🚀 Installazione
+Questa implementazione è un percettrone multistrato con:
+
+- 5 neuroni di input;
+- un singolo strato nascosto configurabile;
+- 1 neurone di output;
+- funzione di attivazione sigmoide;
+- inizializzazione Xavier dei pesi;
+- bias per lo strato nascosto e per quello di output;
+- backpropagation;
+- discesa stocastica del gradiente, o SGD;
+- inverted dropout opzionale;
+- seed configurabile per rendere gli esperimenti riproducibili.
+
+## Il forward pass
+
+Il forward pass è il viaggio dei dati dall’ingresso all’uscita.
+
+Per ogni neurone viene prima calcolata una somma pesata:
+
+```text
+somma = bias + input₁ × peso₁ + input₂ × peso₂ + ... + inputₙ × pesoₙ
+```
+
+Alla somma viene applicata la sigmoide:
+
+```text
+sigmoide(x) = 1 / (1 + e⁻ˣ)
+```
+
+La sigmoide trasforma qualunque numero in un valore compreso tra 0 e 1. Questo introduce la non linearità necessaria per apprendere relazioni più complesse di una semplice retta.
+
+Nel codice:
+
+- `activateLayer` calcola somma pesata, bias e sigmoide;
+- `forward` collega lo strato di input, quello nascosto e quello di output;
+- `feedForward` esegue una previsione senza dropout.
+
+## Errore e backpropagation
+
+Dopo una previsione, la rete confronta il proprio risultato con quello atteso. Il progetto usa la loss quadratica:
+
+```text
+loss = (previsione - valore atteso)² / 2
+```
+
+Il quadrato rende positivi gli errori e dà maggiore peso agli errori grandi. Il fattore `1/2` semplifica la derivata.
+
+La backpropagation risponde alla domanda: “quanto è responsabile ogni peso dell’errore finale?”. Procede dall’output verso gli input applicando la regola della catena.
+
+Per il neurone di output:
+
+```text
+delta output =
+    (previsione - valore atteso)
+    × derivata della sigmoide
+```
+
+Per ogni neurone nascosto:
+
+```text
+delta nascosto =
+    somma(delta output × peso verso output)
+    × derivata della sigmoide nascosta
+    × scala del dropout
+```
+
+Il gradiente di un collegamento è:
+
+```text
+gradiente del peso = valore ricevuto × delta del neurone di arrivo
+```
+
+Infine, gradient descent modifica il parametro:
+
+```text
+nuovo parametro =
+    vecchio parametro - learning rate × gradiente
+```
+
+Il segno meno è importante: il gradiente indica la direzione in cui l’errore cresce più velocemente, quindi la rete si muove nella direzione opposta.
+
+## Bias
+
+Un bias è un parametro aggiunto alla somma pesata prima della funzione di attivazione. Può essere immaginato come una manopola che sposta la soglia di attivazione di un neurone.
+
+Senza bias, un neurone sarebbe vincolato a una soglia centrata nello zero. Per esempio, con input tutti uguali a zero, la rete non potrebbe apprendere liberamente un risultato diverso usando soltanto i pesi.
+
+Il progetto mantiene due vettori distinti:
+
+- `hiddenBiases` per i neuroni nascosti;
+- `outputBiases` per i neuroni di output.
+
+I bias vengono appresi con la stessa regola usata per i pesi.
+
+## Dropout
+
+Il dropout è una tecnica di regolarizzazione. Durante il training spegne casualmente una percentuale dei neuroni nascosti, impedendo alla rete di dipendere sempre dagli stessi percorsi.
+
+Questa implementazione usa inverted dropout:
+
+1. crea una maschera casuale durante il forward pass di training;
+2. assegna scala zero ai neuroni spenti;
+3. amplifica i neuroni conservati con `1 / (1 - dropoutRate)`;
+4. riusa la stessa maschera durante la backpropagation;
+5. disattiva completamente il dropout durante la previsione.
+
+Riutilizzare la stessa maschera è essenziale: un neurone spento durante la previsione di training non deve ricevere un gradiente come se avesse partecipato.
+
+## Normalizzazione
+
+Metri quadrati, numero di stanze e prezzi hanno ordini di grandezza molto diversi. Se fossero inviati direttamente alla rete, i valori grandi dominerebbero i calcoli.
+
+La normalizzazione min-max usa:
+
+```text
+valore normalizzato = (valore - minimo) / (massimo - minimo)
+```
+
+Il minimo diventa 0, il massimo diventa 1 e un valore intermedio mantiene la propria posizione proporzionale.
+
+Sono disponibili due modalità:
+
+- range dichiarati esplicitamente, usati dalla configurazione dimostrativa;
+- range appresi dal solo training set tramite `fit`.
+
+Usare esclusivamente il training set evita il data leakage: il modello non deve conoscere informazioni ricavate dal test set prima della valutazione.
+
+Per i valori fuori range sono disponibili tre strategie:
+
+- `ALLOW`: continua la formula e consente risultati minori di 0 o maggiori di 1;
+- `CLAMP`: limita il valore al minimo o al massimo più vicino;
+- `REJECT`: segnala il dato come non valido.
+
+## Installazione
+
+Requisiti:
+
+- JDK 21 o successivo;
+- Maven 3.9 o successivo.
 
 ```bash
-# Clona il repository
-git clone git@github.com:gbove73/neural-network.git
-
-# Entra nella directory del progetto
+git clone https://github.com/gbove73/neural-network.git
 cd neural-network
-
-# Compila il progetto con Maven
-mvn clean install
+mvn verify
 ```
 
-## 💻 Esempio di Utilizzo
+`mvn verify` compila il progetto, esegue tutti i test, genera il report JaCoCo e fallisce se la copertura di istruzioni o rami scende sotto il 100%.
+
+Il report HTML viene generato in:
+
+```text
+target/site/jacoco/index.html
+```
+
+## Esempio di utilizzo
 
 ```java
-// Crea una rete neurale con la configurazione predefinita
-RealEstateNeuralNetwork evaluator = new RealEstateNeuralNetwork();
+import it.bove.application.RealEstateNeuralNetwork;
+import it.bove.application.TrainingResult;
+import it.bove.domain.realestate.PropertyFeatures;
 
-// Definisce un semplice dataset di addestramento
-double[][] properties = {
-    {80.0, 3.0, 1.0, 2.0, 7.0},   // 220.000€ - appartamento medio in buona zona
-    {150.0, 4.0, 2.0, 3.0, 8.0},  // 380.000€ - appartamento grande in ottima zona
-    {50.0, 2.0, 1.0, 1.0, 5.0}    // 150.000€ - appartamento piccolo in zona media
+RealEstateNeuralNetwork estimator = new RealEstateNeuralNetwork();
+
+double[][] trainingProperties = {
+    {80.0, 3.0, 1.0, 2.0, 7.0},
+    {150.0, 4.0, 2.0, 3.0, 8.0},
+    {50.0, 2.0, 1.0, 1.0, 5.0}
 };
-double[] prices = {220000.0, 380000.0, 150000.0};
 
-// Addestra il modello per 5000 epoche
-evaluator.train(properties, prices, 5000);
+double[] trainingPrices = {
+    220_000.0,
+    380_000.0,
+    150_000.0
+};
 
-// Stima il prezzo di un nuovo immobile
-double price = evaluator.estimatePrice(100.0, 3, 1, 2, 6);
-System.out.println("Prezzo stimato: €" + (int)price);
+TrainingResult result =
+        estimator.train(trainingProperties, trainingPrices, 5_000);
+
+System.out.println("Errore iniziale: " + result.initialMeanSquaredError());
+System.out.println("Errore finale: " + result.finalMeanSquaredError());
+
+PropertyFeatures property =
+        new PropertyFeatures(100.0, 3, 1, 2, 6);
+
+double estimatedPrice = estimator.estimatePrice(property);
+System.out.println("Prezzo stimato: €" + Math.round(estimatedPrice));
 ```
 
-## 📚 Struttura del progetto
+L’overload originario rimane disponibile:
 
-### 🏛️ Organizzazione dei package
-
-Il progetto è strutturato seguendo i principi di Clean Architecture, che garantisce separazione delle responsabilità e indipendenza dai framework:
-
+```java
+double estimatedPrice =
+        estimator.estimatePrice(100.0, 3, 1, 2, 6);
 ```
+
+## Configurazione riproducibile
+
+Una rete neurale contiene casualità nell’inizializzazione dei pesi e nel dropout. Un seed è il punto di partenza del generatore casuale: usando lo stesso seed si ottiene la stessa sequenza di numeri.
+
+```java
+NeuralNetworkConfiguration configuration =
+        new NeuralNetworkConfiguration(
+                5,      // input
+                8,      // neuroni nascosti
+                1,      // output
+                0.05,   // learning rate
+                0.10,   // dropout
+                42L     // seed
+        );
+
+NeuralNetwork network = new NeuralNetwork(configuration);
+```
+
+Il seed non migliora il modello; rende l’esperimento ripetibile e quindi verificabile.
+
+## Configurazione del training
+
+Un’epoca è un giro completo su tutti gli esempi del training set. SGD aggiorna i parametri subito dopo ogni singolo esempio.
+
+```java
+TrainingConfiguration trainingConfiguration =
+        new TrainingConfiguration(
+                5_000,  // epoche
+                true,   // mescola gli esempi a ogni epoca
+                42L,    // seed dello shuffle
+                500     // registra una metrica ogni 500 epoche
+        );
+
+TrainingResult result = estimator.train(
+        trainingProperties,
+        trainingPrices,
+        trainingConfiguration
+);
+```
+
+`TrainingResult` contiene:
+
+- MSE iniziale;
+- MSE finale;
+- storico delle metriche registrate.
+
+## Struttura del progetto
+
+```text
 it.bove
-├── core                 // Logica di business centrale indipendente dal dominio
-│   ├── nn               // Implementazione base rete neurale
-│   └── normalization    // Normalizzazione dati generica
-├── domain               // Regole di business specifiche del dominio
-│   └── realestate       // Dominio della valutazione immobiliare
-├── application          // Casi d'uso dell'applicazione
-└── infrastructure       // Adattatori e implementazioni concrete
+├── core
+│   ├── nn
+│   │   ├── NeuralNetwork
+│   │   ├── NeuralNetworkConfiguration
+│   │   └── NeuralNetworkModel
+│   └── normalization
+│       └── Normalizer
+├── domain
+│   └── realestate
+│       ├── PropertyFeatures
+│       ├── FeatureNormalizer
+│       └── PriceNormalizer
+├── application
+│   ├── RealEstateNeuralNetwork
+│   ├── TrainingConfiguration
+│   ├── TrainingMetric
+│   └── TrainingResult
+└── infrastructure
+    ├── nn
+    │   └── NeuralNetworkAdapter
+    └── normalization
+        ├── DefaultFeatureNormalizer
+        ├── DefaultPriceNormalizer
+        └── OutOfRangePolicy
 ```
 
-#### Strati Architetturali
+### Core
 
-- **Core**: Contiene la logica base indipendente dal dominio
-  - `NeuralNetwork` - Implementazione matematica della rete neurale
-  - `NeuralNetworkModel` - Interfaccia per modelli di rete neurale
-  - `Normalizer<T,R>` - Interfaccia generica per normalizzazione dei dati
+Contiene la matematica generale della rete, indipendente dal caso immobiliare.
 
-- **Domain**: Contiene le regole di business e interfacce specifiche del dominio
-  - `PriceNormalizer` - Interfaccia per normalizzazione prezzi immobiliari
-  - `FeatureNormalizer` - Interfaccia per normalizzazione caratteristiche immobiliari
+### Domain
 
-- **Application**: Implementa i casi d'uso dell'applicazione
-  - `RealEstateNeuralNetwork` - Sistema di valutazione immobiliare
+Dà nomi e regole ai dati immobiliari. `PropertyFeatures` evita di confondere la posizione delle cinque caratteristiche in un array anonimo.
 
-- **Infrastructure**: Contiene implementazioni concrete delle interfacce
-  - `NeuralNetworkAdapter` - Adapter per connettere la rete neurale all'interfaccia del modello
-  - `DefaultPriceNormalizer` - Implementazione concreta per normalizzazione prezzi
-  - `DefaultFeatureNormalizer` - Implementazione concreta per normalizzazione caratteristiche
+### Application
 
-#### Vantaggi dell'architettura
+Coordina normalizzazione, training, metriche, previsione e valutazione.
 
-- **Indipendenza dai Framework** - Il core e il dominio non dipendono da librerie esterne
-- **Testabilità** - Le interfacce permettono di testare i componenti in isolamento
-- **Flessibilità** - Facile sostituire implementazioni (es. diversa strategia di normalizzazione)
-- **Manutenibilità** - Ogni componente ha una responsabilità chiara e ben definita
+### Infrastructure
 
-### `NeuralNetwork.java`
+Contiene le implementazioni concrete dei normalizzatori e l’adapter che presenta `NeuralNetwork` attraverso l’interfaccia `NeuralNetworkModel`.
 
-Il cuore del progetto: implementazione da zero di una rete neurale feedforward con:
+## Strategia di test
 
-- **Inizializzazione dei pesi** - Valori casuali per i collegamenti tra neuroni
-- **Feedforward** - Propagazione del segnale attraverso la rete
-- **Backpropagation** - Calcolo dell'errore e aggiustamento dei pesi
-- **Dropout** - Tecnica per prevenire l'overfitting
-- **Funzioni di attivazione** - Implementazione manuale della funzione sigmoide
+I test non si limitano a controllare che il programma “non lanci errori”. Verificano:
 
-### `RealEstateNeuralNetwork.java`
+- valori noti di sigmoide e derivata;
+- stabilità numerica con valori estremi;
+- indipendenza degli array restituiti;
+- apprendimento dei bias con input nulli;
+- riproducibilità di pesi e dropout;
+- gradient checking numerico;
+- riduzione misurabile della loss;
+- generalizzazione su immobili non presenti nel training set;
+- separazione tra training e test;
+- reversibilità della normalizzazione;
+- tutte le politiche fuori range;
+- validazione di configurazioni, dataset e valori di dominio;
+- contratti dell’adapter;
+- 100% delle istruzioni e dei rami secondo JaCoCo.
 
-Wrapper che applica la rete neurale al contesto immobiliare:
+### Gradient checking
 
-- **Normalizzazione** - Preprocessamento dei dati per la rete neurale
-- **Pattern Adapter** - Integrazione modulare con la rete neurale
-- **Valutazione** - Metriche per misurare l'accuratezza delle predizioni
+Il gradient checking confronta due modi indipendenti di calcolare la stessa pendenza:
 
-### `RealEstateNeuralNetworkTest.java`
+1. la backpropagation produce il gradiente analitico;
+2. il test aumenta e diminuisce ogni parametro di una quantità piccolissima;
+3. osserva quanto cambia la loss;
+4. ricava un gradiente numerico;
+5. verifica che i due risultati coincidano entro una tolleranza.
 
-Test completi che verificano:
+Se le due pendenze coincidono, è molto improbabile che la formula della backpropagation contenga un errore di segno, una derivata mancante o un indice scambiato.
 
-- **Convergenza** - Diminuzione dell'errore durante l'addestramento
-- **Accuratezza** - Capacità predittiva su esempi noti
-- **Generalizzazione** - Comportamento con dati mai visti
-- **Robustezza** - Reazione a scenari limite
+## Limiti dichiarati
 
-### `DefaultFeatureNormalizer.java`
+Il progetto resta volutamente piccolo:
 
-Implementazione predefinita del normalizzatore di caratteristiche:
+- supporta un solo strato nascosto;
+- usa soltanto la sigmoide;
+- esegue SGD su un esempio alla volta;
+- non implementa mini-batch, ottimizzatori avanzati o accelerazione hardware;
+- conserva pesi e bias soltanto in memoria;
+- usa un dataset dimostrativo, non dati immobiliari reali;
+- non produce una valutazione utilizzabile per decisioni economiche.
 
-- **Normalizzazione** - Trasformazione delle caratteristiche degli immobili in un intervallo normalizzato
-- **Denormalizzazione** - Riconversione delle caratteristiche normalizzate ai valori originali
+Questi limiti mantengono il codice leggibile e permettono di concentrarsi sui fondamenti matematici.
 
-### `DefaultPriceNormalizer.java`
+## Domande frequenti
 
-Implementazione predefinita del normalizzatore di prezzi:
+### Perché otto neuroni nascosti?
 
-- **Normalizzazione** - Trasformazione dei prezzi degli immobili in un intervallo normalizzato
-- **Denormalizzazione** - Riconversione dei prezzi normalizzati ai valori originali
+Otto non è un numero matematicamente ottimale e non deriva da una regola universale. È una scelta dimostrativa: abbastanza grande da mostrare una rappresentazione interna più ricca dei cinque input, ma ancora abbastanza piccola da seguire nei test e nei commenti.
 
-### `FeatureNormalizer.java`
+In un progetto reale, il numero di neuroni sarebbe scelto confrontando più configurazioni su un validation set separato. Il test set verrebbe usato soltanto alla fine.
 
-Interfaccia per la normalizzazione delle caratteristiche degli immobili:
+### Perché la sigmoide?
 
-- **Normalizzazione** - Definisce il metodo per normalizzare le caratteristiche
-- **Denormalizzazione** - Definisce il metodo per denormalizzare le caratteristiche
+È semplice da visualizzare, ha una derivata compatta e rende chiara la regola della catena. Reti moderne usano spesso altre attivazioni, ma la sigmoide è adatta a un primo studio della backpropagation.
 
-### `PriceNormalizer.java`
+### Perché il modello può sbagliare anche se la loss diminuisce?
 
-Interfaccia per la normalizzazione dei prezzi degli immobili:
+Ridurre l’errore sul training set significa adattarsi agli esempi osservati. Non garantisce automaticamente buone previsioni su casi nuovi. Per questo i test distinguono training set e test set e il README evita di presentare il progetto come uno stimatore professionale.
 
-- **Normalizzazione** - Definisce il metodo per normalizzare i prezzi
-- **Denormalizzazione** - Definisce il metodo per denormalizzare i prezzi
+## Come contribuire
 
-### `NeuralNetworkAdapter.java`
+1. Crea un fork del repository.
+2. Crea un branch descrittivo.
+3. Mantieni commenti e Javadoc in italiano e identificatori in inglese.
+4. Esegui `mvn verify`.
+5. Verifica che test e copertura restino al 100%.
+6. Aggiorna `CHANGELOG.md`.
+7. Apri una pull request.
 
-Adapter per la classe `NeuralNetwork` esistente:
+## Versione
 
-- **Train** - Addestra la rete neurale con un esempio
-- **Predict** - Esegue una predizione utilizzando la rete neurale
+La versione corrente è `1.0.0` e segue Semantic Versioning.
 
-### `NeuralNetworkModel.java`
+Le modifiche pubblicate e non ancora pubblicate sono documentate in `CHANGELOG.md`.
 
-Interfaccia che definisce il comportamento di un modello di rete neurale:
+## Licenza
 
-- **Train** - Addestra il modello con un esempio
-- **Predict** - Esegue una predizione utilizzando il modello
+Il progetto è distribuito con licenza MIT. Consulta `LICENSE` per i dettagli.
 
-### `Normalizer.java`
-
-Interfaccia generica per la normalizzazione dei dati:
-
-- **Normalizzazione** - Definisce il metodo per normalizzare un valore
-- **Denormalizzazione** - Definisce il metodo per denormalizzare un valore
-
-## 🛠️ Requisiti Tecnici
-
-- **Java 21+** - Utilizzo delle funzionalità più recenti del linguaggio
-- **Maven** - Gestione delle dipendenze e build automatizzata
-- **SLF4J** - Logging strutturato per debug e tracciabilità
-- **JUnit 5** - Framework per i test automatizzati
-
-## ⚠️ Limitazioni
-
-Essendo un progetto dimostrativo, presenta alcune limitazioni:
-
-- **Performance** - Non ottimizzato per grandi dataset (usa calcoli naïf)
-- **Funzioni di attivazione** - Implementa solo la funzione sigmoide
-- **Architettura** - Supporta solo una topologia fissa con un singolo strato nascosto
-- **Batch processing** - Non implementa il mini-batch gradient descent
-
-## 🤝 Come Contribuire
-
-Questo è un progetto didattico, ma i contributi sono benvenuti:
-
-1. Fork del repository
-2. Crea un branch (`git checkout -b feature/miglioramento-xyz`)
-3. Commit delle modifiche (`git commit -m 'Aggiunto xyz'`)
-4. Push al branch (`git push origin feature/miglioramento-xyz`)
-5. Apri una Pull Request
-
-## 📝 Licenza
-
-Questo progetto è rilasciato sotto licenza MIT. Consulta il file `LICENSE` per maggiori dettagli.
-
-## F.A.Q.
-
-#### Perché hai scelto proprio 8 neuroni per l’hidden layer?
-
-Il numero di neuroni dovrebbe seguire la "rule of thumb" con un valore tra il numero di neuroni di input - in questo
-caso 5, le caratteristiche dell'immobile - e il numero di neuroni di output - in questo caso 1, il prezzo dell'immobile.
-Ne ho scelti 8 per sperimentare l'overfitting, rischio che si corre con troppi neuroni nello strato hidden, e
-verificarne il meccanismo di dropout implementato per mitigarlo. Con troppi neuroni per lo strato nascosto il rischio è
-che la rete neurale si adatti troppo ai dati di addestramento, e quindi il modello impara troppo bene i dettagli e il "
-rumore" del set di dati di addestramento perdendo la capacità di generalizzare su nuovi dati non visti.
-
-## 📞 Contatti
+## Contatti
 
 Gianluca Bove - [@gbove73](https://github.com/gbove73)
 
@@ -233,4 +408,4 @@ Repository: [github.com/gbove73/neural-network](https://github.com/gbove73/neura
 
 ---
 
-*Questo progetto ha scopo puramente dimostrativo ed educativo. L'implementazione manuale di una rete neurale è un esercizio didattico: in ambito produttivo si consiglia di utilizzare librerie mature e ottimizzate come TensorFlow, PyTorch o DeepLearning4J.*
+*Questo progetto ha scopo esclusivamente dimostrativo ed educativo. Per sistemi reali si raccomandano dati rappresentativi, validazione rigorosa e librerie mature come TensorFlow, PyTorch o DeepLearning4J.*

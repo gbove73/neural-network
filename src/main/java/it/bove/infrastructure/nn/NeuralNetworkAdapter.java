@@ -5,9 +5,14 @@ import it.bove.core.nn.NeuralNetworkModel;
 
 /**
  * Adapter per la classe NeuralNetwork esistente.
- * Seguendo il pattern Adapter, adattiamo l'implementazione esistente alla nostra interfaccia.
+ *
+ * <p>Un adapter può essere paragonato a un adattatore per prese elettriche:
+ * non cambia l'apparecchio, ma gli permette di rispettare una forma diversa.
+ * L'applicazione conosce soltanto l'interfaccia {@link NeuralNetworkModel};
+ * questa classe traduce {@code predict} in {@code feedForward} e delega il
+ * training alla rete matematica concreta.</p>
  */
-public class NeuralNetworkAdapter implements NeuralNetworkModel {
+public final class NeuralNetworkAdapter implements NeuralNetworkModel {
     // La rete neurale concreta da adattare
     private final NeuralNetwork neuralNetwork;
 
@@ -17,7 +22,9 @@ public class NeuralNetworkAdapter implements NeuralNetworkModel {
      * @param neuralNetwork La rete neurale da adattare
      */
     public NeuralNetworkAdapter(NeuralNetwork neuralNetwork) {
-        // Memorizziamo la rete neurale da adattare
+        if (neuralNetwork == null) {
+            throw new IllegalArgumentException("La rete neurale è obbligatoria");
+        }
         this.neuralNetwork = neuralNetwork;
     }
 
