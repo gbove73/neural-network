@@ -368,7 +368,7 @@ Questi limiti mantengono il codice leggibile e permettono di concentrarsi sui fo
 
 ### Perché otto neuroni nascosti?
 
-Otto non è un numero matematicamente ottimale e non deriva da una regola universale. È una scelta dimostrativa: abbastanza grande da mostrare una rappresentazione interna più ricca dei cinque input, ma ancora abbastanza piccola da seguire nei test e nei commenti.
+Otto non è un numero matematicamente ottimale e non deriva da una regola universale. È una scelta didattica che offre una capacità sufficiente per l’esempio, mantenendo al tempo stesso dimensioni della rete e tempi di esecuzione contenuti.
 
 In un progetto reale, il numero di neuroni sarebbe scelto confrontando più configurazioni su un validation set separato. Il test set verrebbe usato soltanto alla fine.
 
