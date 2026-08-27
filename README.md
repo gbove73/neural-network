@@ -186,6 +186,34 @@ Il report HTML viene generato in:
 target/site/jacoco/index.html
 ```
 
+## Interfaccia web
+
+Il progetto include in `web` un laboratorio interattivo realizzato con Next.js. La GUI visualizza l'architettura 5—8—1, permette di modificare le caratteristiche di un immobile e presenta una proiezione dimostrativa della stima. Il calcolo nel browser è intenzionalmente illustrativo: il modello Java rimane l'implementazione di riferimento.
+
+Per avviare l'interfaccia in locale:
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+La build di produzione usa l'esportazione statica di Next.js e genera `web/out`, già configurata per il percorso pubblico `https://gianlucabove.it/neural-network/`.
+
+## Distribuzione continua
+
+La pipeline `.github/workflows/deploy.yml` viene eseguita a ogni push su `main`. Prima del deploy verifica il modello con Maven, esegue il lint della GUI e produce la build statica. La pubblicazione avviene soltanto se tutti i controlli terminano correttamente.
+
+L'environment GitHub `production` deve contenere questi secret:
+
+- `DEPLOY_SSH_HOST`: host SSH del server che ospita `gianlucabove.it`;
+- `DEPLOY_SSH_USER`: utente SSH dedicato alla distribuzione;
+- `DEPLOY_SSH_PRIVATE_KEY`: chiave privata dell'utente di deploy;
+- `DEPLOY_PATH`: percorso assoluto della directory pubblica corrispondente a `/neural-network`;
+- `DEPLOY_SSH_PORT`: porta SSH, facoltativa; se assente viene usata la porta `22`.
+
+La chiave pubblica corrispondente deve essere autorizzata sul server e l'utente deve poter scrivere esclusivamente nella directory di destinazione. Il deploy sincronizza il contenuto e rimuove dalla destinazione i file non più presenti nella build.
+
 ## Esempio di utilizzo
 
 ```java

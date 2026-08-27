@@ -1,4 +1,7 @@
 target/
+web/node_modules/
+web/.next/
+web/out/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

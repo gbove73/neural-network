@@ -6,6 +6,12 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+### Added
+
+- Interfaccia Next.js responsive per esplorare visivamente la rete neurale e simulare una stima immobiliare.
+- Esportazione statica configurata per la pubblicazione in `gianlucabove.it/neural-network`.
+- Pipeline GitHub Actions che verifica il modello Java, controlla e compila la GUI, quindi distribuisce il sito su `main` tramite SSH.
+
 ## [1.0.0] - 2026-07-17
 
 ### Added
